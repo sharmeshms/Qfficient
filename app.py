@@ -29,12 +29,336 @@ def _w(fn):
 
 st.set_page_config(
     page_title="Thermodynamic QUBO Microgrid Optimizer",
-    page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-st.title("⚡ Thermodynamic-Mapped QUBO for Dynamic Microgrid Power Distribution")
+st.markdown("""<style>
+:root {
+  --bg-page: #F3EBDC;
+  --bg-card: #FBF7EE;
+  --bg-sidebar: #E9DDC6;
+  --bg-sunken: #EDE2CC;
+
+  --text-primary: #2B1D16;
+  --text-secondary: #5B463A;
+  --text-muted: #7A6656;
+
+  --accent: #6B1D2A;
+  --accent-hover: #531521;
+  --accent-pressed: #43111B;
+  --accent-soft: #E8D3D3;
+  --brass: #A98B4A;
+
+  --border: #D8C9AC;
+  --border-strong: #BFAA84;
+  --border-input: #94806A;
+
+  --status-pass-text: #3F5D2E;
+  --status-pass-fill: #E3EBD6;
+  --status-warn-text: #8A5A12;
+  --status-warn-fill: #F4E6C6;
+  --status-fail-text: #A33A2A;
+  --status-fail-fill: #F3D9D2;
+  --status-info-text: #5B463A;
+  --status-info-fill: #E9DDC6;
+}
+
+[data-testid="stAppViewContainer"],
+[data-testid="stAppViewBlockContainer"] {
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+[data-testid="stHeader"] {
+  background-color: var(--bg-page);
+}
+
+[data-testid="stSidebar"] {
+  background-color: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+}
+
+[data-testid="stSidebar"] hr {
+  border-color: var(--border);
+}
+
+h1, h2, h3, h4 {
+  font-family: Georgia, "Times New Roman", serif;
+  color: var(--text-primary);
+  text-shadow: 0 1px 0 rgba(255,250,240,.7);
+}
+
+h2, h3 {
+  border-bottom: 1px solid var(--brass);
+  box-shadow: 0 1px 0 rgba(255,250,240,.6);
+}
+
+.stButton > button[kind="primary"],
+.stButton > button[data-testid="stBaseButton-primary"],
+button[data-testid="baseButton-primary"] {
+  background-color: var(--accent) !important;
+  color: #FBF7EE !important;
+  border: 1px solid var(--accent) !important;
+  border-radius: 3px !important;
+  box-shadow: inset 0 1px 0 rgba(255,244,230,.18), 0 1px 2px rgba(43,29,22,.25) !important;
+  font-weight: 600;
+}
+
+.stButton > button[kind="primary"]:hover,
+.stButton > button[data-testid="stBaseButton-primary"]:hover,
+button[data-testid="baseButton-primary"]:hover {
+  background-color: var(--accent-hover) !important;
+  border-color: var(--accent-hover) !important;
+  color: #FBF7EE !important;
+}
+
+.stButton > button[kind="primary"]:active,
+.stButton > button[data-testid="stBaseButton-primary"]:active,
+button[data-testid="baseButton-primary"]:active {
+  background-color: var(--accent-pressed) !important;
+  border-color: var(--accent-pressed) !important;
+  box-shadow: inset 0 2px 3px rgba(43,29,22,.28) !important;
+}
+
+.stDownloadButton > button,
+.stButton > button[kind="secondary"],
+.stButton > button[data-testid="stBaseButton-secondary"],
+button[data-testid="baseButton-secondary"] {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--accent) !important;
+  color: var(--accent) !important;
+  border-radius: 3px !important;
+  box-shadow: 0 1px 2px rgba(43,29,22,.10) !important;
+  font-weight: 600;
+}
+
+.stDownloadButton > button:hover,
+.stButton > button[kind="secondary"]:hover,
+.stButton > button[data-testid="stBaseButton-secondary"]:hover,
+button[data-testid="baseButton-secondary"]:hover {
+  background-color: var(--accent-soft) !important;
+  border-color: var(--accent) !important;
+  color: var(--accent-hover) !important;
+}
+
+.stDownloadButton > button:active,
+.stButton > button[kind="secondary"]:active,
+.stButton > button[data-testid="stBaseButton-secondary"]:active,
+button[data-testid="baseButton-secondary"]:active {
+  box-shadow: inset 0 1px 2px rgba(43,29,22,.15) !important;
+}
+
+[data-baseweb="input"],
+[data-baseweb="input"] input,
+[data-baseweb="select"] > div {
+  background-color: var(--bg-sunken) !important;
+  border: 1px solid var(--border-input) !important;
+  color: var(--text-primary) !important;
+  border-radius: 3px !important;
+  box-shadow: inset 0 1px 3px rgba(43,29,22,.14), 0 1px 0 rgba(255,250,240,.7) !important;
+}
+
+[data-testid="stSlider"] div[data-baseweb="slider"] div[role="slider"] {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--accent) !important;
+  box-shadow: 0 1px 3px rgba(43,29,22,.3) !important;
+  border-radius: 3px !important;
+}
+
+[data-testid="stSlider"] div[data-baseweb="slider"] > div > div:first-child {
+  background-color: var(--bg-sunken) !important;
+  border: 1px solid var(--border-input) !important;
+  box-shadow: inset 0 1px 3px rgba(43,29,22,.14), 0 1px 0 rgba(255,250,240,.7) !important;
+}
+
+[data-testid="stSlider"] div[data-baseweb="slider"] > div > div:nth-child(2) {
+  background-color: var(--accent) !important;
+}
+
+[data-testid="stSlider"] div {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.stTabs [data-baseweb="tab-list"] {
+  background-color: transparent !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+.stTabs [data-baseweb="tab"] {
+  color: var(--text-secondary) !important;
+  background-color: transparent !important;
+  font-family: Georgia, "Times New Roman", serif !important;
+  font-size: 14px !important;
+  border-radius: 3px 3px 0 0 !important;
+}
+
+.stTabs [data-baseweb="tab"]:hover {
+  color: var(--accent-hover) !important;
+}
+
+.stTabs [data-baseweb="tab"][aria-selected="true"] {
+  color: var(--accent) !important;
+  border-bottom: 2px solid var(--accent) !important;
+  font-weight: 600 !important;
+}
+
+.stTabs [data-baseweb="tab-highlight"] {
+  background-color: var(--accent) !important;
+}
+
+[data-testid="stExpander"],
+[data-testid="stDataFrame"],
+[data-testid="stTable"],
+[data-testid="stImage"],
+[data-testid="stMetric"] {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--brass) !important;
+  border-radius: 3px;
+  box-shadow: 0 1px 0 rgba(43,29,22,.06), 0 2px 8px rgba(43,29,22,.07);
+}
+
+[data-testid="stExpander"]:hover,
+[data-testid="stExpander"][open] {
+  box-shadow: 0 1px 0 rgba(43,29,22,.08), 0 6px 16px rgba(43,29,22,.10);
+}
+
+[data-baseweb="popover"],
+[data-baseweb="menu"],
+div[data-baseweb="select"] ul,
+ul[data-baseweb="menu"] {
+  background: rgba(251,247,238,.86) !important;
+  backdrop-filter: blur(8px) saturate(1.05);
+  -webkit-backdrop-filter: blur(8px) saturate(1.05);
+  border: 1px solid rgba(169,139,74,.45) !important;
+  box-shadow: 0 8px 24px rgba(43,29,22,.16) !important;
+  border-radius: 3px !important;
+  color: var(--text-primary) !important;
+}
+
+[data-baseweb="menu"] li:hover,
+div[data-baseweb="select"] ul li:hover,
+li[data-baseweb="menu-item"]:hover {
+  background-color: var(--bg-sunken) !important;
+  color: var(--text-primary) !important;
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  [data-baseweb="popover"],
+  [data-baseweb="menu"],
+  div[data-baseweb="select"] ul,
+  ul[data-baseweb="menu"] {
+    background: #FBF7EE !important;
+  }
+}
+
+[data-testid="stAlert"] {
+  background-color: var(--bg-sidebar) !important;
+  border: 1px solid var(--border) !important;
+  border-top: 2px solid var(--brass) !important;
+  color: var(--text-secondary) !important;
+  border-radius: 3px !important;
+  box-shadow: 0 1px 0 rgba(43,29,22,.06), 0 2px 8px rgba(43,29,22,.07) !important;
+}
+
+[data-testid="stAlert"] div[role="alert"] {
+  color: var(--text-secondary) !important;
+}
+
+div[data-testid="stNotification"] {
+  background-color: var(--bg-sidebar) !important;
+  border: 1px solid var(--border) !important;
+  border-top: 2px solid var(--brass) !important;
+  color: var(--text-secondary) !important;
+  border-radius: 3px !important;
+}
+
+[data-testid="stProgress"] > div > div > div > div {
+  background-color: var(--accent) !important;
+}
+
+[data-testid="stProgress"] > div > div {
+  background-color: var(--border) !important;
+}
+
+*:focus-visible,
+button:focus-visible,
+input:focus-visible,
+[data-baseweb="tab"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 2px !important;
+}
+
+button:disabled,
+input:disabled,
+[disabled] {
+  opacity: 0.55 !important;
+  cursor: not-allowed !important;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  button, input, select, [data-baseweb="tab"], [data-testid="stExpander"], a {
+    transition: color 150ms ease-out, background-color 150ms ease-out, border-color 150ms ease-out, box-shadow 150ms ease-out;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th {
+  background-color: var(--bg-sidebar) !important;
+  color: var(--text-secondary) !important;
+  border-bottom: 2px solid var(--border-strong) !important;
+  font-size: 12px !important;
+  text-transform: uppercase !important;
+  letter-spacing: .04em !important;
+}
+
+td {
+  border-top: 1px solid var(--border) !important;
+  color: var(--text-primary) !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+tr:hover td {
+  background-color: var(--bg-sunken) !important;
+}
+
+code {
+  background-color: var(--bg-sunken) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 3px !important;
+}
+
+caption, [data-testid="stCaptionContainer"] {
+  color: var(--text-muted) !important;
+  font-size: 12px !important;
+  font-variant-numeric: tabular-nums;
+}
+
+a {
+  color: var(--accent) !important;
+  text-decoration-color: var(--brass) !important;
+}
+</style>""", unsafe_allow_html=True)
+
+st.title("Thermodynamic-Mapped QUBO for Dynamic Microgrid Power Distribution")
 st.markdown(
     "**Next-generation microgrid reconfiguration via non-equilibrium thermodynamics & quantum annealing (Ising / QUBO)**  \n"
     "*Set the inputs, run the optimizer, and read the result as a report card.*"
@@ -46,13 +370,13 @@ st.markdown(
 GRID_SIZES = {"microgrid12": (12, 16), "ieee33": (33, 37)}   # (components, candidate lines)
 
 with st.sidebar:
-    st.header("🎛️ Simulation & Grid Inputs")
+    st.header("Simulation & Grid Inputs")
     grid_key = st.selectbox("Select Microgrid Architecture", list(GRID_CHOICES),
                             format_func=GRID_CHOICES.get, index=0)
 
     cfg_custom_args = {}
     if grid_key == "custom":
-        st.subheader("⚙️ Custom Grid Topology")
+        st.subheader("Custom Grid Topology")
         c_nodes = st.slider("Total Components (Buses)", 10, MAX_BUSES, 30, 5,
                             help="1 substation + (N-1) load/DER buses")
         c_ties = st.slider("Tie Lines Available", 1, 15, 5, 1,
@@ -79,12 +403,12 @@ with st.sidebar:
         st.caption(f"{n_comp} components · {n_lines} candidate lines "
                    f"(supported limit: {MAX_BUSES} components / {MAX_BRANCHES} lines)")
 
-    st.subheader("☀️ Renewable & Demand Transients")
+    st.subheader("Renewable & Demand Transients")
     solar_drop = st.slider("Solar PV Cloud Drop (%)", 0, 90, 75, 5)
     ev_spike = st.slider("EV Charging Depot Surge (kW)", 0, 1200, 700, 50)
     t_ambient = st.slider("Ambient Temperature (°C)", 10, 45, 25, 1)
 
-    st.subheader("⚛️ Quantum Annealing Solver")
+    st.subheader("Quantum Annealing Solver")
     solver_key = st.selectbox("Solver Engine", list(SOLVER_CHOICES), format_func=SOLVER_CHOICES.get, index=0)
     num_reads = st.slider("Quantum Reads / Annealing Shots", 100, 1000, 200, 100,
                           disabled=(solver_key == "classical"))
@@ -92,9 +416,9 @@ with st.sidebar:
     cfg = OptimizationConfig(grid=grid_key, solver=solver_key, solar_drop_pct=solar_drop,
                              ev_surge_kw=ev_spike, ambient_c=t_ambient, num_reads=num_reads,
                              **cfg_custom_args)
-    st.caption(f"⏱️ Estimated run time ≈ {max(estimate_runtime_s(cfg, n_lines), 0.5):.0f} s "
+    st.caption(f"Estimated run time ≈ {max(estimate_runtime_s(cfg, n_lines), 0.5):.0f} s "
                f"({cfg.time_steps} steps × {cfg.dt_seconds:.0f} s window)")
-    run_btn = st.button("🚀 Run Thermodynamic Optimization", type="primary", **_w(st.button))
+    run_btn = st.button("Run Thermodynamic Optimization", type="primary", **_w(st.button))
 
 # ---------------------------------------------------------------------------
 # Backend run -> session state (the report only appears once the backend is done)
@@ -116,7 +440,7 @@ if run_btn:
 result = st.session_state.get("result")
 
 tab_report, tab_benchmark, tab_limits, tab_theory = st.tabs(
-    ["📋 Report Card", "📊 Multi-Scenario Benchmark & Ablations", "📏 Input Limits & Scalability", "📐 Theoretical Physics & Datasets"]
+    ["Report Card", "Multi-Scenario Benchmark & Ablations", "Input Limits & Scalability", "Theoretical Physics & Datasets"]
 )
 
 # ---------------------------------------------------------------------------
@@ -136,7 +460,7 @@ with tab_report:
         st.markdown(rc.kpi_cards_html(result, grade), unsafe_allow_html=True)
 
         # ---- executive comparison table ---------------------------------------
-        st.subheader("📊 Executive Performance Comparison")
+        st.subheader("Executive Performance Comparison")
         s_sum = result["summary"]
         b_sum, q_sum = s_sum["baseline"], s_sum["qubo"]
         chk_sum = result["checks"]
@@ -153,7 +477,7 @@ with tab_report:
         st.dataframe(comp_df, hide_index=True, **_w(st.dataframe))
 
         # ---- network diagram --------------------------------------------------
-        st.subheader("🗺️ Optimized Network Topology Diagram")
+        st.subheader("Optimized Network Topology Diagram")
         times = result["time_s"]
         step = st.select_slider(
             "Inspect the network at time (s)", options=list(range(len(times))),
@@ -167,18 +491,18 @@ with tab_report:
         plt.close(fig_net)
 
         # ---- line-by-line table -----------------------------------------------
-        st.subheader(f"📋 Line-by-Line Operating State (at t = {times[step]:.0f} s)")
+        st.subheader(f"Line-by-Line Operating State (at t = {times[step]:.0f} s)")
         st.caption(f"Electrical flow, thermal runaway resistance, loading %, and losses across all {result['grid']['n_lines']} branches.")
         st.dataframe(pd.DataFrame(rc.line_rows(result, step)), hide_index=True, **_w(st.dataframe))
 
         # ---- transient charts -------------------------------------------------
-        st.subheader("📈 Transient Behaviour Charts")
+        st.subheader("Transient Behaviour Charts")
         fig_tr = rc.render_transient_figure(result)
         st.pyplot(fig_tr, **_w(st.pyplot))
         plt.close(fig_tr)
 
         # ---- checklist --------------------------------------------------------
-        st.subheader("✅ Verification checklist")
+        st.subheader("Verification checklist")
         st.markdown(rc.checklist_html(grade), unsafe_allow_html=True)
         with st.expander("How the overall grade is decided"):
             st.markdown(
@@ -195,7 +519,7 @@ with tab_report:
             f"{g['n_cycles']} independent loops · seed {result['config']['seed']} · run {result['run_id']}"
         )
         d1, d2, d3 = st.columns(3)
-        d1.download_button("⬇️ Report (JSON)", json.dumps(result, indent=2), f"qfficient_report_{result['run_id']}.json",
+        d1.download_button("Report (JSON)", json.dumps(result, indent=2), f"qfficient_report_{result['run_id']}.json",
                            "application/json", **_w(st.download_button))
         timeline = pd.DataFrame({
             "time_s": result["time_s"],
@@ -205,16 +529,16 @@ with tab_report:
             "baseline_min_voltage_pu": result["baseline"]["min_v"], "qubo_min_voltage_pu": result["qubo"]["min_v"],
             "qubo_switch_operations": result["qubo"]["toggles"], "qubo_latency_ms": result["qubo"]["latency_ms"],
         })
-        d2.download_button("⬇️ Timeline (CSV)", timeline.to_csv(index=False), f"qfficient_timeline_{result['run_id']}.csv",
+        d2.download_button("Timeline (CSV)", timeline.to_csv(index=False), f"qfficient_timeline_{result['run_id']}.csv",
                            "text/csv", **_w(st.download_button))
-        d3.download_button("⬇️ Network diagram (PNG)", net_png, f"qfficient_network_{result['run_id']}.png",
+        d3.download_button("Network diagram (PNG)", net_png, f"qfficient_network_{result['run_id']}.png",
                            "image/png", **_w(st.download_button))
 
 # ---------------------------------------------------------------------------
 # Tab 2: Multi-Scenario Benchmark & Ablations
 # ---------------------------------------------------------------------------
 with tab_benchmark:
-    st.subheader("📊 Rigorous Multi-Scenario Benchmark & Ablation Study")
+    st.subheader("Rigorous Multi-Scenario Benchmark & Ablation Study")
     st.markdown(
         "Direct comparison across independent renewable/EV scenarios on the **IEEE 33-Bus benchmark**, "
         "measuring real 3-phase Joule heat dissipation ($3 I^2 R$), decision latency, and statistical significance."
@@ -263,7 +587,7 @@ with tab_benchmark:
         st.dataframe(pd.DataFrame(rows), hide_index=True, **_w(st.dataframe))
 
     st.markdown("""
-    ### 🔬 Scientific Attribution & Reconciliation of the 22.27% Claim
+    ### Scientific Attribution & Reconciliation of the 22.27% Claim
     * **Standard Baseline vs Strawman Baseline**: The standard textbook IEEE 33-bus baseline experiences **~4.98 MJ** of heat dissipation under these profiles. Comparing against this true baseline reveals that **exact dynamic reconfiguration yields -28.37% loss reduction** ($p = 2.15 \\times 10^{-8}$).
     * **Role of Power-Flow Selection**: When 50 random radial spanning trees are sampled and evaluated via LinDistFlow (`random_trees_filtered`), they achieve **-20.06% loss reduction** ($p = 4.37 \\times 10^{-7}$). This proves that evaluating candidate trees through a power-flow selector is effective, and the previous 22.27% figure was an artifact of the power-flow filter and strawman baseline.
     * **Raw QUBO Formulation**: The raw Hamiltonian lowest-energy state (`qubo_mesh_current_raw`) produces valid radial trees, but because linear objective weights do not capture the non-linear AC/LinDistFlow network effects, exact classical or hybrid power-flow-guided selection is necessary for optimal performance.
@@ -328,4 +652,4 @@ with tab_theory:
     """)
 
 st.sidebar.markdown("---")
-st.sidebar.caption("⚡ Thermodynamic QUBO Distribution Engine | Antigravity Project")
+st.sidebar.caption("Thermodynamic QUBO Distribution Engine | Antigravity Project")
