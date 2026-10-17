@@ -1,0 +1,3 @@
+[console_scripts]
+thermo-qubo-gui = visualize_microgrid:main
+thermo-qubo-sim = main_experiment:run_simulation
