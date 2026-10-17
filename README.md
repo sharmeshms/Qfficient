@@ -4,6 +4,7 @@
 ### *Next-Generation Distribution Network Reconfiguration via Non-Equilibrium Thermodynamics, Fast LinDistFlow, and Quantum Annealing*
 
 [![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-GitHub_Pages-2ea44f?style=for-the-badge&logo=github&logoColor=white)](https://sharmeshms.github.io/Qfficient/)
 [![Quantum](https://img.shields.io/badge/Quantum-D--Wave%20%7C%20OpenJij%20%7C%20Neal-4A154B?style=for-the-badge&logo=quantum&logoColor=white)](https://www.dwavesys.com/)
 [![Framework](https://img.shields.io/badge/Streamlit-2.0%20App-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge)](LICENSE)
@@ -291,8 +292,8 @@ streamlit run app.py
 
 ### 1. Environment Setup
 ```bash
-git clone https://github.com/RishDK07/Qfficient-.git
-cd Qfficient-
+git clone https://github.com/sharmeshms/Qfficient.git
+cd Qfficient
 
 # Create virtual environment
 python -m venv .venv
@@ -419,9 +420,9 @@ If you use **Qfficient** in academic research or industrial projects, please cit
 ```bibtex
 @article{qfficient2026,
   title={Thermodynamic-Mapped QUBO Formulation for Dynamic Microgrid Power Distribution},
-  author={RishDK07 and Contributors},
+  author={Sharmesh Magesh and Contributors},
   journal={GitHub Repository},
-  url={https://github.com/RishDK07/Qfficient-},
+  url={https://github.com/sharmeshms/Qfficient},
   year={2026}
 }
 ```
