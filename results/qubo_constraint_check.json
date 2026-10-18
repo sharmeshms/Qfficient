@@ -1,0 +1,28 @@
+{
+  "dataset": "IEEE 33-bus",
+  "num_nodes": 33,
+  "num_lines": 37,
+  "target_closed_lines": 32,
+  "total_combinations_c_37_32": 435897,
+  "ground_truth_valid_spanning_trees": 50751,
+  "basis_cycle_formulation": {
+    "num_cycles": 5,
+    "zero_penalty_configurations": 159964,
+    "valid_trees": 50751,
+    "invalid_configurations": 109213,
+    "validity_rate_pct": 31.73,
+    "guarantees_spanning_tree": false
+  },
+  "elementary_cycle_formulation": {
+    "num_cycles": 26,
+    "zero_penalty_configurations": 50751,
+    "valid_trees": 50751,
+    "invalid_configurations": 0,
+    "validity_rate_pct": 100.0,
+    "guarantees_spanning_tree": true
+  },
+  "findings": {
+    "basis_cycle_issue": "5 basis cycles admit 159,964 zero-penalty states of which 109,213 (68.27%) are cyclic/disconnected subgraphs.",
+    "elementary_cycle_resolution": "Penalizing all 26 elementary cycles eliminates all cyclic subgraphs, yielding exactly the 50,751 valid radial spanning trees (100.00% validity rate)."
+  }
+}

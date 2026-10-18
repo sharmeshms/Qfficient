@@ -1,8 +1,48 @@
+import itertools
 import dimod
 import networkx as nx
 from dataclasses import dataclass
 from typing import Dict, List, Tuple, Optional, Sequence
 import numpy as np
+
+
+def enumerate_elementary_cycles(graph: nx.Graph, edges: List[Tuple[int, int]]) -> List[List[int]]:
+    """Enumerate all elementary cycles in an undirected graph via GF(2) cycle space span."""
+    edge_map = {}
+    for idx, (u, v) in enumerate(edges):
+        edge_map[(u, v)] = idx
+        edge_map[(v, u)] = idx
+
+    basis = nx.cycle_basis(graph)
+    basis_ce = []
+    for c in basis:
+        ce = set()
+        for i in range(len(c)):
+            u, v = c[i], c[(i + 1) % len(c)]
+            if (u, v) in edge_map:
+                ce.add(edge_map[(u, v)])
+        basis_ce.append(ce)
+
+    d = len(basis_ce)
+    # If cycle dimension <= 12, exhaustively enumerate elementary cycles via GF(2)
+    if d <= 12:
+        elem_cycles = []
+        for r in range(1, d + 1):
+            for combo in itertools.combinations(basis_ce, r):
+                sym_diff = set()
+                for ce in combo:
+                    sym_diff ^= ce
+                # Check if induced subgraph is a single simple cycle (connected, degree 2)
+                subG = nx.Graph()
+                for e in sym_diff:
+                    u, v = edges[e]
+                    subG.add_edge(u, v)
+                if len(subG) > 0 and nx.is_connected(subG) and all(deg == 2 for _, deg in subG.degree()):
+                    if sym_diff not in elem_cycles:
+                        elem_cycles.append(sym_diff)
+        return [sorted(list(c)) for c in elem_cycles]
+    else:
+        return [sorted(list(c)) for c in basis_ce]
 
 
 def bounded_binary_coeffs(upper_bound: int) -> List[int]:
@@ -65,12 +105,14 @@ class ThermodynamicQUBOBuilder:
         lambda_rad: float = 30.0,
         lambda_cap: float = 10.0,
         lambda_sw: float = 1.0,
+        cycle_mode: str = "basis",
     ):
         self.num_buses = num_buses
         self.edges = edges  # List of (u, v) for edge_id = 0 .. M-1
         self.num_edges = len(edges)
         self.substations = substations
         self.graph = graph
+        self.cycle_mode = cycle_mode
         
         self.l_thermo = lambda_thermo
         self.l_cycle = lambda_cycle
@@ -78,24 +120,26 @@ class ThermodynamicQUBOBuilder:
         self.l_cap = lambda_cap
         self.l_sw = lambda_sw
 
-        # Precompute fundamental cycle edges if graph is provided
+        # Precompute cycle edges if graph is provided
         self.cycle_edge_ids: List[List[int]] = []
         if self.graph is not None:
-            cycles = nx.cycle_basis(self.graph)
-            for c in cycles:
-                ce = []
-                for i in range(len(c)):
-                    u, v = c[i], c[(i + 1) % len(c)]
-                    e_data = self.graph.get_edge_data(u, v)
-                    if e_data and "edge_id" in e_data:
-                        ce.append(e_data["edge_id"])
-                    else:
-                        # Lookup in edges list
-                        for idx, (eu, ev) in enumerate(self.edges):
-                            if (eu == u and ev == v) or (eu == v and ev == u):
-                                ce.append(idx)
-                                break
-                self.cycle_edge_ids.append(ce)
+            if cycle_mode == "elementary":
+                self.cycle_edge_ids = enumerate_elementary_cycles(self.graph, self.edges)
+            else:
+                cycles = nx.cycle_basis(self.graph)
+                for c in cycles:
+                    ce = []
+                    for i in range(len(c)):
+                        u, v = c[i], c[(i + 1) % len(c)]
+                        e_data = self.graph.get_edge_data(u, v)
+                        if e_data and "edge_id" in e_data:
+                            ce.append(e_data["edge_id"])
+                        else:
+                            for idx, (eu, ev) in enumerate(self.edges):
+                                if (eu == u and ev == v) or (eu == v and ev == u):
+                                    ce.append(idx)
+                                    break
+                    self.cycle_edge_ids.append(ce)
 
     def build_bqm(
         self,
@@ -103,6 +147,7 @@ class ThermodynamicQUBOBuilder:
         line_currents: Dict[int, float],
         line_i_max: Dict[int, float],
         prev_switch_states: Optional[Dict[int, int]] = None,
+        use_slacks: Optional[bool] = None,
     ) -> dimod.BinaryQuadraticModel:
         """
         Formulates the complete unconstrained BQM using dimod.
@@ -123,23 +168,39 @@ class ThermodynamicQUBOBuilder:
             bqm.add_variable(f"x_{e}", self.l_thermo * w)
 
         # ------------------------------------------------------------------
-        # Term 2: Fundamental Cycle Breaking Constraints H_cycle(x)
-        # Each fundamental loop k must have exactly |C_k| - 1 active branches:
-        # (Sum_{e in C_k} x_e - (|C_k| - 1))^2
-        # = Sum_{e} (1 - 2*target)*x_e + 2 * Sum_{a < b} x_a * x_b + target^2
+        # Term 2: Cycle Breaking Constraints H_cycle(x)
+        # In elementary cycle mode with slacks: enforces Sum_{e in C_k} x_e <= |C_k| - 1
         # ------------------------------------------------------------------
-        for ce in self.cycle_edge_ids:
-            target = len(ce) - 1
-            lin_coeff = self.l_cycle * (1.0 - 2.0 * float(target))
-            for e_idx in ce:
-                bqm.add_variable(f"x_{e_idx}", lin_coeff)
+        if use_slacks is None:
+            use_slacks = (self.cycle_mode == "elementary")
 
-            quad_coeff = 2.0 * self.l_cycle
-            for a in range(len(ce)):
-                for b in range(a + 1, len(ce)):
-                    bqm.add_interaction(f"x_{ce[a]}", f"x_{ce[b]}", quad_coeff)
-            
-            bqm.offset += self.l_cycle * (float(target) ** 2)
+        if use_slacks:
+            for k, ce in enumerate(self.cycle_edge_ids):
+                max_slack = max(len(ce) - 2, 1)
+                coeffs = bounded_binary_coeffs(max_slack)
+                target = float(len(ce) - 1)
+                terms = [(f"x_{e}", 1.0) for e in ce] + [(f"s_{k}_{j}", float(c)) for j, c in enumerate(coeffs)]
+                for v_name, a_i in terms:
+                    bqm.add_variable(v_name, self.l_cycle * (a_i ** 2 - 2.0 * target * a_i))
+                for a in range(len(terms)):
+                    v_a, a_i = terms[a]
+                    for b in range(a + 1, len(terms)):
+                        v_b, a_j = terms[b]
+                        bqm.add_interaction(v_a, v_b, 2.0 * self.l_cycle * a_i * a_j)
+                bqm.offset += self.l_cycle * (target ** 2)
+        else:
+            for ce in self.cycle_edge_ids:
+                target = len(ce) - 1
+                lin_coeff = self.l_cycle * (1.0 - 2.0 * float(target))
+                for e_idx in ce:
+                    bqm.add_variable(f"x_{e_idx}", lin_coeff)
+
+                quad_coeff = 2.0 * self.l_cycle
+                for a in range(len(ce)):
+                    for b in range(a + 1, len(ce)):
+                        bqm.add_interaction(f"x_{ce[a]}", f"x_{ce[b]}", quad_coeff)
+                
+                bqm.offset += self.l_cycle * (float(target) ** 2)
 
         # ------------------------------------------------------------------
         # Term 3: Radiality / Tree Topology Constraint H_radiality(x)

@@ -8,9 +8,11 @@ class OpenJijAnnealer:
     Solves the Thermodynamic-Mapped QUBO using OpenJij's Simulated Quantum Annealing (SQA)
     and Classical Simulated Annealing (SA) engines.
     
-    Adheres strictly to physics-grounded evaluation:
-    Extracts the raw lowest-energy ground state of the QUBO Hamiltonian WITHOUT
-    any post-hoc power-flow filtering or re-ranking.
+    Provides two extraction modes:
+    1. `extract_raw_qubo_tree`: extracts the lowest-energy raw sample that satisfies radial tree
+       topology constraints (pure Hamiltonian eigenvalue ranking).
+    2. `extract_optimal_tree`: evaluates candidate radial trees from the annealer sample distribution
+       using LinDistFlow power-flow loss ranking to select the minimum-dissipation topology.
     """
     def __init__(self, use_sqa: bool = False):
         self.use_sqa = use_sqa

@@ -142,10 +142,38 @@ class RandomTreePolicy(Policy):
     def reset(self, grid, fast, timeline):
         self.all_trees = fast.enumerate_radial_configs()
 
+    def _repair_to_tree(self, active_edges: Set[int], fast: FastFeeder, weights: Dict[int, float]) -> Tuple[int, ...]:
+        """Greedy repair if random sample is not connected tree."""
+        if fast.is_tree(tuple(active_edges)):
+            return tuple(sorted(active_edges))
+        all_edges = list(range(fast.m))
+        all_edges.sort(key=lambda e: (0 if e in active_edges else 1, weights.get(e, 0.0)))
+        import networkx as nx
+        G = nx.Graph()
+        G.add_nodes_from(range(fast.n))
+        chosen = []
+        for e in all_edges:
+            u, v = fast.eu[e], fast.ev[e]
+            if not nx.has_path(G, u, v):
+                G.add_edge(u, v)
+                chosen.append(e)
+            if len(chosen) == fast.n - 1:
+                break
+        return tuple(sorted(chosen))
+
     def decide(self, ctx: DecisionContext) -> Tuple[Tuple[int, ...], float]:
         t0 = time.perf_counter()
-        indices = self.rng.choice(len(self.all_trees), size=min(self.k_samples, len(self.all_trees)), replace=False)
-        candidates = [self.all_trees[i] for i in indices]
+        if self.mode == "repair_ranked":
+            # Generate K random candidate bitstrings with n-1 lines, repair each, rank by power flow
+            candidates = []
+            weights = {i: ctx.resistances[i] for i in range(ctx.fast.m)}
+            for _ in range(self.k_samples):
+                random_subset = set(self.rng.choice(ctx.fast.m, size=ctx.fast.n - 1, replace=False))
+                tree = self._repair_to_tree(random_subset, ctx.fast, weights)
+                candidates.append(tree)
+        else:
+            indices = self.rng.choice(len(self.all_trees), size=min(self.k_samples, len(self.all_trees)), replace=False)
+            candidates = [self.all_trees[i] for i in indices]
 
         if self.mode == "raw":
             chosen = candidates[0]
@@ -166,7 +194,10 @@ class RandomTreePolicy(Policy):
 class QUBOPolicy(Policy):
     """Thermodynamic QUBO Policy with Simulated Annealing.
     Modes:
-      - selection: 'raw' (pure Hamiltonian eigenvalue ranking) vs 'filtered' (power flow loss filter)
+      - selection:
+          'raw': pure raw ground state bitstring from QUBO Hamiltonian without repair
+          'repair_only': raw ground state with MST repair if invalid, but NO power-flow ranking
+          'filtered': candidates from annealer reads evaluated and ranked by LinDistFlow loss
       - weights: 'mesh_current' vs 'flow_preserving'
     """
 
@@ -174,7 +205,7 @@ class QUBOPolicy(Policy):
         self,
         sampler: Optional[Any] = None,
         num_reads: int = 100,
-        selection: str = "raw",
+        selection: str = "filtered",
         weight_mode: str = "mesh_current",
         seed: int = 42,
     ):
@@ -186,6 +217,8 @@ class QUBOPolicy(Policy):
         self.builder: Optional[ThermodynamicQUBOBuilder] = None
         self.calculator = EntropyCalculator()
         self.all_trees: List[Tuple[int, ...]] = []
+        self.last_valid_tree_rate: float = 0.0
+        self.last_ground_state_valid: bool = False
 
     def reset(self, grid, fast, timeline):
         edges = [(grid.lines[e].u, grid.lines[e].v) for e in fast.edge_ids]
@@ -199,6 +232,7 @@ class QUBOPolicy(Policy):
             lambda_rad=4.0,
             lambda_cap=5.0,
             lambda_sw=0.2,
+            cycle_mode="elementary",
         )
 
     def _repair_to_tree(self, active_edges: Set[int], fast: FastFeeder, weights: Dict[int, float]) -> Tuple[int, ...]:
@@ -235,10 +269,8 @@ class QUBOPolicy(Policy):
             line = ctx.grid.lines[e]
             i_val = i_mesh.get(e, 30.0)
             if self.weight_mode == "flow_preserving":
-                # Weight prioritizing high-loss branches
                 weights[i] = (i_val ** 2) * ctx.resistances[i] / max(ctx.temps_k[i], 273.15)
             else:
-                # Standard thermodynamic entropy rate
                 p_loss = 3.0 * (i_val ** 2) * ctx.resistances[i]
                 weights[i] = p_loss / max(ctx.temps_k[i], 273.15)
 
@@ -252,17 +284,25 @@ class QUBOPolicy(Policy):
 
         X, E, sample_ms = self.sampler.sample(qubo_model.Q, num_reads=self.num_reads, offset=qubo_model.offset)
 
+        # Track valid tree rate among raw reads
+        raw_trees_valid = [ctx.fast.is_tree(tuple(sorted(np.nonzero(X[r, :ctx.fast.m])[0]))) for r in range(len(X))]
+        self.last_valid_tree_rate = float(np.mean(raw_trees_valid))
+        self.last_ground_state_valid = bool(raw_trees_valid[0])
+
+        best_sample = X[0, :ctx.fast.m]
+        active_set = set(np.nonzero(best_sample)[0])
+
         if self.selection == "raw":
-            # Rank STRICTLY by raw lowest QUBO Hamiltonian energy
-            best_sample = X[0, :ctx.fast.m]
-            active_set = set(np.nonzero(best_sample)[0])
+            # Strictly return raw top read (without repair)
+            chosen = tuple(sorted(active_set))
+        elif self.selection == "repair_only":
+            # Return raw ground state with MST repair if needed, but NO power flow ranking
             if ctx.fast.is_tree(tuple(active_set)):
                 chosen = tuple(sorted(active_set))
             else:
-                # Repair minimal discrepancy to form valid radial tree
                 chosen = self._repair_to_tree(active_set, ctx.fast, weights)
         else:
-            # Filtered mode: check feasible trees among reads and rank by power flow loss
+            # Filtered mode: check feasible trees among reads (or repair) and rank by power flow loss
             valid_trees = []
             for r in range(len(X)):
                 act = tuple(sorted(np.nonzero(X[r, :ctx.fast.m])[0]))
@@ -279,8 +319,7 @@ class QUBOPolicy(Policy):
                         chosen = t
             else:
                 # Fallback to repairing top sample
-                act_set = set(np.nonzero(X[0, :ctx.fast.m])[0])
-                chosen = self._repair_to_tree(act_set, ctx.fast, weights)
+                chosen = self._repair_to_tree(active_set, ctx.fast, weights)
 
         latency_ms = (time.perf_counter() - t0) * 1e3
         return chosen, latency_ms

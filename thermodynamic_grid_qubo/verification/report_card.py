@@ -47,7 +47,9 @@ def fmt_energy_mj(mj: float) -> str:
     return f"{mj * 1000:.1f} kJ" if abs(mj) < 0.1 else f"{mj:.3f} MJ"
 
 
-def fmt_pct(p: float) -> str:
+def fmt_pct(p: Any) -> str:
+    if isinstance(p, str):
+        return p
     return f"{p:+.2f}%"
 
 
@@ -60,11 +62,19 @@ def grade_results(res: Dict[str, Any]) -> Dict[str, Any]:
     heat = s["heat_reduction_pct"]
     ent = s["entropy_reduction_pct"]
     is_classical = res["config"]["solver"] == "classical"
+    baseline_invalid = not s.get("baseline_valid", True) or isinstance(heat, str)
 
-    def status_for_reduction(pct: float) -> str:
+    def status_for_reduction(pct: Any) -> str:
+        if baseline_invalid or isinstance(pct, str):
+            return "WARN"
         if is_classical:
             return "INFO"
         return "PASS" if pct >= HEAT_TARGET_PCT else ("WARN" if pct >= 0 else "FAIL")
+
+    def val_for_reduction(pct: Any) -> str:
+        if isinstance(pct, str):
+            return pct
+        return fmt_pct(pct)
 
     if q["voltage_violations"] == 0:
         v_status = "PASS"
@@ -78,9 +88,9 @@ def grade_results(res: Dict[str, Any]) -> Dict[str, Any]:
     steps = len(res["time_s"])
     checks: List[Dict[str, str]] = [
         {"label": "Joule heat reduction", "status": status_for_reduction(heat),
-         "value": f"{fmt_pct(-heat)}", "target": f"≥ {HEAT_TARGET_PCT:.0f}% reduction vs. baseline"},
+         "value": val_for_reduction(heat), "target": f"≥ {HEAT_TARGET_PCT:.0f}% reduction vs. baseline"},
         {"label": "Entropy generation", "status": status_for_reduction(ent),
-         "value": f"{fmt_pct(-ent)}", "target": "Lower than baseline (Gouy–Stodola)"},
+         "value": val_for_reduction(ent), "target": "Lower than baseline (Gouy–Stodola)"},
         {"label": "Peak conductor temperature",
          "status": "FAIL" if q["peak_temp_c"] >= TEMP_LIMIT_C else ("PASS" if s["peak_temp_reduction_c"] >= 0 else "WARN"),
          "value": f"{q['peak_temp_c']:.1f} °C", "target": f"< {TEMP_LIMIT_C:.0f} °C and not above baseline"},
@@ -99,7 +109,8 @@ def grade_results(res: Dict[str, Any]) -> Dict[str, Any]:
          "value": f"{q['avg_latency_ms']:.0f} ms per reconfiguration", "target": f"< {LATENCY_TARGET_MS:.0f} ms"},
     ]
 
-    hard_fail = (not is_classical and heat < 0) or not chk["radial_all_steps"] or chk["overload_line_steps_qubo"] > 0
+    hard_fail = ((not is_classical and not baseline_invalid and isinstance(heat, (int, float)) and heat < 0)
+                 or not chk["radial_all_steps"] or chk["overload_line_steps_qubo"] > 0)
     fails = sum(c["status"] == "FAIL" for c in checks)
     warns = sum(c["status"] == "WARN" for c in checks)
     if hard_fail:
@@ -111,7 +122,9 @@ def grade_results(res: Dict[str, Any]) -> Dict[str, Any]:
     else:
         overall = "A"
 
-    if is_classical:
+    if baseline_invalid:
+        headline = "Warning: Baseline configuration is invalid; heat reduction percentage is N/A."
+    elif is_classical:
         headline = "Classical baseline only — no QUBO optimization was applied."
     elif heat >= HEAT_TARGET_PCT:
         headline = f"Target met: {heat:.1f}% less Joule heat and {ent:.1f}% less entropy than the static baseline."

@@ -117,6 +117,7 @@ def simulate(
     total_heat_joules = 0.0
     total_entropy_gen = 0.0
     violation_steps = 0
+    infeasible_steps = 0
     min_voltage_pu = 1.0
     switch_ops = 0
     decision_times_ms: List[float] = []
@@ -160,7 +161,8 @@ def simulate(
         # Power flow evaluation
         ok, v_pu, currents_amps, step_loss_kw, v_min = fast.evaluate(active_edges, p_pu, q_pu, resistances)
         if not ok:
-            # Fallback if invalid tree
+            # Explicitly track infeasible policy outputs and fall back to safe standard baseline
+            infeasible_steps += 1
             active_edges = fast.standard_edges
             ok, v_pu, currents_amps, step_loss_kw, v_min = fast.evaluate(active_edges, p_pu, q_pu, resistances)
 
@@ -207,6 +209,7 @@ def simulate(
         "voltage_violation_steps": int(violation_steps),
         "min_voltage_pu": float(min_voltage_pu),
         "switch_operations": int(switch_ops),
+        "infeasible_steps": int(infeasible_steps),
         "mean_decision_ms": float(np.mean(decision_times_ms)),
         "max_decision_ms": float(np.max(decision_times_ms)),
         "total_steps": sc.time_steps,

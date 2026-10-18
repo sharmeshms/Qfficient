@@ -20,6 +20,7 @@ class ThermodynamicLineModel:
         c_th: float = 250000.0,
         theta_th: float = 0.003,
         t_amb: float = 298.15,
+        t_ref: float = 298.15,
         i_max: float = 400.0,
         length_km: float = 1.0,
     ):
@@ -31,15 +32,16 @@ class ThermodynamicLineModel:
         self.alpha = alpha                  # Temperature coefficient of resistance (1/K)
         self.c_th = c_th * length_km        # Conductor heat capacity (J/K)
         self.theta_th = theta_th / max(length_km, 1e-4) # Thermal resistance to ambient (K/W)
-        self.t_amb = t_amb                  # Ambient environmental temperature (Kelvin, 25°C = 298.15K)
+        self.t_ref = t_ref                  # Reference temperature for r0 (Kelvin, 25°C = 298.15K)
+        self.t_amb = t_amb                  # Ambient environmental temperature (Kelvin)
         self.temp = t_amb                   # Operating conductor temperature (Kelvin)
         self.i_max = i_max                  # Max thermal ampacity rating (Amperes)
         self.total_joule_heat_joules = 0.0  # Cumulative heat energy dissipated (Joules)
         self.total_entropy_gen = 0.0        # Cumulative entropy generation (J/K)
 
     def resistance(self) -> float:
-        """Dynamic temperature-dependent electrical resistance R(T)."""
-        return self.r0 * (1.0 + self.alpha * (self.temp - self.t_amb))
+        """Dynamic temperature-dependent electrical resistance R(T) relative to reference T_ref."""
+        return self.r0 * (1.0 + self.alpha * (self.temp - self.t_ref))
 
     def update_transient_temperature(self, current_amps: float, dt_seconds: float = 1.0) -> float:
         """

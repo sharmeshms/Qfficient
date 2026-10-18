@@ -37,7 +37,8 @@ class MetricsEvaluator:
     def compare_methods(
         self,
         baseline_metrics: Dict[str, float],
-        qubo_metrics: Dict[str, float]
+        qubo_metrics: Dict[str, float],
+        baseline_valid: bool = True,
     ) -> Dict[str, Any]:
         """
         Computes reduction percentages and verifies hypothesis:
@@ -45,16 +46,24 @@ class MetricsEvaluator:
         """
         heat_base = baseline_metrics["total_heat_mj"]
         heat_qubo = qubo_metrics["total_heat_mj"]
-        heat_reduction_pct = ((heat_base - heat_qubo) / max(heat_base, 1e-9)) * 100.0
+        
+        # Guard division: if baseline is invalid, zero or non-finite, return "N/A (invalid baseline)"
+        if not baseline_valid or heat_base <= 0.0 or not np.isfinite(heat_base):
+            heat_reduction_pct: Any = "N/A (invalid baseline)"
+        else:
+            heat_reduction_pct = ((heat_base - heat_qubo) / heat_base) * 100.0
 
         entropy_base = baseline_metrics["total_entropy_jk"]
         entropy_qubo = qubo_metrics["total_entropy_jk"]
-        entropy_reduction_pct = ((entropy_base - entropy_qubo) / max(entropy_base, 1e-9)) * 100.0
+        if not baseline_valid or entropy_base <= 0.0 or not np.isfinite(entropy_base):
+            entropy_reduction_pct: Any = "N/A (invalid baseline)"
+        else:
+            entropy_reduction_pct = ((entropy_base - entropy_qubo) / entropy_base) * 100.0
 
         temp_reduction_c = baseline_metrics["peak_temp_c"] - qubo_metrics["peak_temp_c"]
         exergy_saved_mj = baseline_metrics["exergy_destroyed_mj"] - qubo_metrics["exergy_destroyed_mj"]
 
-        hypothesis_passed = heat_reduction_pct >= 5.0
+        hypothesis_passed = isinstance(heat_reduction_pct, (int, float)) and heat_reduction_pct >= 5.0
 
         comparison = {
             "heat_reduction_pct": heat_reduction_pct,
@@ -64,6 +73,7 @@ class MetricsEvaluator:
             "hypothesis_passed": hypothesis_passed,
             "baseline": baseline_metrics,
             "qubo": qubo_metrics,
+            "baseline_valid": baseline_valid,
         }
         return comparison
 

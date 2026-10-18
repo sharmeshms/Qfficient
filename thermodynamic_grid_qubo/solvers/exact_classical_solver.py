@@ -35,8 +35,14 @@ class ExactClassicalSolver:
         if hasattr(self.grid, "tie_switches") and self.grid.tie_switches:
             switches = {e: (0 if e in self.grid.tie_switches else 1) for e in self.grid.lines}
         else:
-            n_tree = len(self.grid.graph.nodes) - len(self.grid.substations)
-            switches = {e: (1 if i < n_tree else 0) for i, e in enumerate(self.grid.lines)}
+            from .classical_baseline import ClassicalBaselineSolver
+            switches = ClassicalBaselineSolver(self.grid).solve()
+
+        # Strictly verify radiality; if non-radial, fall back to minimum resistance spanning tree
+        is_tree, _ = self.verifier.is_valid_radial_tree(switches)
+        if not is_tree:
+            from .classical_baseline import ClassicalBaselineSolver
+            switches = ClassicalBaselineSolver(self.grid).solve()
         return switches, 0.05
 
     def solve_exact_loss_minimizer(
@@ -95,7 +101,11 @@ class ExactClassicalSolver:
                         current_loss = cand_loss
                         open_switches = cand_open_set
                         current_switches = cand_switches
-                        improved = True
+        is_tree, _ = self.verifier.is_valid_radial_tree(current_switches)
+        if not is_tree:
+            from .classical_baseline import ClassicalBaselineSolver
+            current_switches = ClassicalBaselineSolver(self.grid).solve()
+            _, _, _, current_loss = self.verifier.solve_power_flow(current_switches, injections)
 
         elapsed_ms = (time.perf_counter() - start_time) * 1000.0
         return current_switches, current_loss, elapsed_ms

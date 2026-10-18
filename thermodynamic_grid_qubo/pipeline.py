@@ -114,9 +114,10 @@ def load_12_component_microgrid() -> DistributionGrid:
         p, q = base_loads.get(n, (0, 0))
         grid.add_bus(ids[n], p_kw=p, q_kvar=q, is_substation=(n == "Substation"))
 
+    tie_indices = {1, 2, 10, 12, 14}
     for idx, (_lid, a, b, loss_kw, _flow) in enumerate(SAMPLE_LINES):
         r = 0.25 + 0.35 * loss_kw
-        grid.add_branch(idx, ids[a], ids[b], r_ohm=r, x_ohm=0.5 * r, i_max=300.0)
+        grid.add_branch(idx, ids[a], ids[b], r_ohm=r, x_ohm=0.5 * r, i_max=300.0, is_tie=(idx in tie_indices))
 
     grid.der_nodes = {
         ids["Solar Farm"]: "pv", ids["Wind Park"]: "wind",
@@ -326,6 +327,8 @@ def run_optimization(
     base_switches = ClassicalBaselineSolver(grid_base).solve()
     base_latency_ms = (time.perf_counter() - t0) * 1000.0   # measured, not a constant
 
+    base_is_feasible, base_feas_msg = verifier_base.is_valid_radial_tree(base_switches)
+
     B = {k: [] for k in ("heat_mj", "entropy", "peak_temp", "min_v", "loss_kw", "currents", "temps", "line_loss_kw")}
     base_viol = base_over = 0
     for t in range(T):
@@ -339,10 +342,14 @@ def run_optimization(
         B["currents"].append([cur.get(e, 0.0) for e in edge_ids])
         notify(t + 1, T * 2, f"Baseline step {t + 1}/{T}")
 
+    total_base_heat = float(sum(B["heat_mj"]))
+    baseline_valid = bool(base_is_feasible and total_base_heat > 0.0 and np.isfinite(total_base_heat))
+
     # ---- B. thermodynamic QUBO ---------------------------------------------
     Q = {k: [] for k in ("heat_mj", "entropy", "peak_temp", "min_v", "loss_kw", "currents", "temps",
                          "line_loss_kw", "switches", "toggles", "latency_ms", "energy")}
     qubo_viol = qubo_over = 0
+    infeasible_steps_qubo = 0
     active = copy.deepcopy(base_switches)
     currents_q = {e: 120.0 for e in grid_qubo.lines}
     n_vars = n_couplings = n_cycles = 0
@@ -371,9 +378,13 @@ def run_optimization(
         else:
             energy, ms = 0.0, base_latency_ms
 
+        step_feasible, step_feas_msg = verifier_qubo.is_valid_radial_tree(active)
+        if not step_feasible:
+            infeasible_steps_qubo += 1
+
         ok, v_pu, cur, loss = verifier_qubo.solve_power_flow(active, scenario[t])
         currents_q = cur
-        qubo_viol += 0 if ok else 1
+        qubo_viol += 0 if (ok and step_feasible) else 1
         qubo_over += overloaded(grid_qubo, active, cur)
         heat, ent, temps, ll = thermal_step(grid_qubo, active, cur)
         Q["heat_mj"].append(heat); Q["entropy"].append(ent)
@@ -388,10 +399,10 @@ def run_optimization(
     # ---- C. metrics & hard checks ------------------------------------------
     s_base = evaluator.summarize_run(B["heat_mj"], B["entropy"], B["peak_temp"], base_viol, [base_latency_ms] * T)
     s_qubo = evaluator.summarize_run(Q["heat_mj"], Q["entropy"], Q["peak_temp"], qubo_viol, Q["latency_ms"])
-    comparison = evaluator.compare_methods(s_base, s_qubo)
+    comparison = evaluator.compare_methods(s_base, s_qubo, baseline_valid=baseline_valid)
 
     radial_ok = all(verifier_qubo.is_valid_radial_tree({e: s for e, s in zip(edge_ids, sw)})[0]
-                    for sw in Q["switches"])
+                    for sw in Q["switches"]) and (infeasible_steps_qubo == 0)
     peak_step = int(np.argmax(B["loss_kw"]))
 
     return {
@@ -421,6 +432,8 @@ def run_optimization(
         "summary": comparison,
         "checks": {
             "radial_all_steps": bool(radial_ok),
+            "infeasible_steps": int(infeasible_steps_qubo),
+            "baseline_valid": bool(baseline_valid),
             "overload_line_steps_base": int(base_over),
             "overload_line_steps_qubo": int(qubo_over),
             "reconfigurations": int(sum(Q["toggles"])),
