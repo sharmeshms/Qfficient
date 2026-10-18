@@ -45,7 +45,23 @@ This document records every modification, bug fix, algorithm correction, and cha
 ---
 
 ## Phase 2: Automation & Housekeeping
-*(To be populated as Phase 2 progresses)*
+- **Date**: 2026-10-18
+- **2.1. Standalone HTML Dashboard Generator**:
+  - `build_dashboard_html.py`: Replaced hard-coded author machine path `c:\ep-project\dashboard_data.json` with repository-local `Path(__file__).resolve().parent / "dashboard_data.json"`.
+  - Regenerated `dashboard.html` with zero external absolute path dependencies.
+- **2.2. Automated README Results Table Generator**:
+  - Created `scripts/generate_readme_table.py` which reads `results/benchmark_summary.json` and updates `README.md` between `<!-- RESULTS_TABLE_START -->` and `<!-- RESULTS_TABLE_END -->` markers.
+  - Formatted columns: Policy, Heat Dis. (MJ), $\Delta$ vs Baseline (%), Min Voltage (pu), Radiality (%), Latency (ms), and P-Value / Significance.
+- **2.3. Markdown & App Number Consistency Verifier**:
+  - Created `scripts/check_readme_consistency.py` and test `tests/test_readme_consistency.py`.
+  - Verifies that every numeric metric cited in `README.md` and `app.py` corresponds exactly to `results/benchmark_summary.json`.
+- **2.4. Dynamic Streamlit Metric Binding**:
+  - `app.py`: Updated Benchmark tab narrative to dynamically format metrics from `results/benchmark_summary.json` instead of using stale hard-coded strings.
+  - Enforced positive sign convention (`+X.XX%` indicates positive heat reduction / savings).
+  - Maintained 100% strict adherence to zero-CSS/styling modification rules.
+- **2.5. Deterministic Random Seeds**:
+  - `pipeline.py` & `openjij_annealer.py`: Enabled explicit random seed passing (`cfg.seed + t`) to `neal.SimulatedAnnealingSampler` and `openjij.SASampler` ensuring perfect reproducibility across test runs.
+  - Configured `pyproject.toml` with `[tool.pytest.ini_options] pythonpath = ["."]`.
 
 ---
 

@@ -61,13 +61,18 @@ For a comprehensive, end-to-end technical reference with step-by-step CLI walkth
 ### 1. IEEE 33-Bus Benchmark (Rigorous Research-Grade Evaluation)
 Evaluated across **5 independent renewable/load fluctuation profiles** over 25 time steps ($dt = 2.0\text{ s}$) using IEEE 33-Bus benchmark parameters ($V_{\text{base}} = 12.66\text{ kV}$, $S_{\text{base}} = 10\text{ MVA}$, ANSI C84.1 voltage band $[0.95, 1.05]\text{ p.u.}$):
 
-| Policy / Algorithm | Total Joule Heat (MJ) [Mean ± Std] | Heat Reduction vs Std. Baseline (%) | $p$-value ($t$-test) | Peak Conductor Temp (°C) | Voltage Violations (steps) | Decision Latency (ms) |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Standard Static Baseline** (IEEE 33 default) | $4.980 \pm 0.068$ | *Reference* | — | $26.5^\circ\text{C}$ | $18.4$ | $0.00\text{ ms}$ |
-| **Static Loss-Optimal** (Best static tree) | $3.592 \pm 0.045$ | **$+27.87\%$** | $3.34 \times 10^{-8}$ | $26.0^\circ\text{C}$ | $5.4$ | $0.00\text{ ms}$ |
-| **Exact Dynamic Oracle** (`exact_oracle`) | **$3.567 \pm 0.045$** | **$+28.37\%$** | **$2.15 \times 10^{-8}$** | **$25.9^\circ\text{C}$** | **$5.2$** | **$38.98\text{ ms}$** |
-| **Random Spanning Trees (Filtered)** | $3.981 \pm 0.065$ | $+20.06\%$ | $4.37 \times 10^{-7}$ | $26.0^\circ\text{C}$ | $4.6$ | $8.35\text{ ms}$ |
-| **Thermodynamic QUBO (Ensemble SQA)** | $3.470 \pm 0.052$ | **$+22.54\%$** | $6.12 \times 10^{-4}$ | $27.3^\circ\text{C}$ | $29.0$ | $85.40\text{ ms}$ |
+<!-- RESULTS_TABLE_START -->
+| Policy / Algorithm | Total Joule Heat (MJ) [Mean ± Std] | Heat Reduction vs Std. Baseline (%) | $p$-value ($t$-test) | Peak Conductor Temp (°C) | Voltage Violations (steps) | Switch Operations | Decision Latency (ms) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Standard Static Baseline (IEEE 33 default)** | $4.980 \pm 0.068$ | *Reference* | — | $26.5^\circ\text{C}$ | $18.4$ | $0.0$ | $0.00\text{ ms}$ |
+| **Static Loss-Optimal (Best static tree)** | $3.592 \pm 0.045$ | **+27.87%** | 3.34e-08 | $26.0^\circ\text{C}$ | $5.4$ | $5.0$ | $0.00\text{ ms}$ |
+| **Exact Dynamic Oracle (exact_oracle)** | $3.567 \pm 0.045$ | **+28.37%** | 2.15e-08 | $25.9^\circ\text{C}$ | $5.2$ | $21.6$ | $38.98\text{ ms}$ |
+| **Random Spanning Trees (Raw)** | $11.709 \pm 1.720$ | -135.11% | 9.52e-04 | $26.6^\circ\text{C}$ | $22.0$ | $106.6$ | $0.04\text{ ms}$ |
+| **Random Spanning Trees (Filtered / PF ranked)** | $3.981 \pm 0.065$ | **+20.06%** | 4.37e-07 | $26.0^\circ\text{C}$ | $4.6$ | $93.8$ | $8.35\text{ ms}$ |
+| **Thermodynamic QUBO (Raw eigenvalue)** | $29.895 \pm 2.155$ | -500.28% | 1.35e-05 | $31.3^\circ\text{C}$ | $25.0$ | $51.4$ | $368.10\text{ ms}$ |
+| **Thermodynamic QUBO (Repair + PF ranked)** | $4.845 \pm 0.092$ | **+2.71%** | 0.0061 | $26.2^\circ\text{C}$ | $14.4$ | $95.8$ | $331.40\text{ ms}$ |
+*Benchmark parameters: 5 scenarios, 25 time steps ($dt = 2.0\text{ s}$), seeds: 1000.., correction: Paired t-test / Wilcoxon signed-rank. Generated from `python run_benchmark.py`.*
+<!-- RESULTS_TABLE_END -->
 
 ### 2. Scientific Claim Reconciliation
 * **Empirical Verification of the 22.5% Claim**: Early iterations reported a 22.5% reduction relative to a static-resistance minimum spanning tree baseline. In our research-grade benchmark (`results/BENCHMARK_REPORT.md`), the true theoretical ceiling established by the **Exact Dynamic Oracle** achieves **28.37% loss reduction** ($p = 2.15 \times 10^{-8}$) over the textbook IEEE 33 static configuration.

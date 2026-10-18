@@ -38,3 +38,5 @@ thermo-qubo-gui = "visualize_microgrid:main"
 include = ["thermodynamic_grid_qubo*"]
 exclude = ["results*", "tests*"]
 
+[tool.pytest.ini_options]
+pythonpath = ["."]

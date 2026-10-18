@@ -214,10 +214,10 @@ class ParametricScenario(RenewableProfileSimulator):
 # ---------------------------------------------------------------------------
 # Solver dispatch
 # ---------------------------------------------------------------------------
-def _anneal(solver: str, annealer: OpenJijAnnealer, bqm, num_reads: int):
+def _anneal(solver: str, annealer: OpenJijAnnealer, bqm, num_reads: int, seed: Optional[int] = None):
     """Returns (energy, latency_ms, response) for sqa / neal / numpy_annealer."""
     if solver == "sqa":
-        _s, energy, ms, resp = annealer.solve(bqm, num_reads=num_reads)
+        _s, energy, ms, resp = annealer.solve(bqm, num_reads=num_reads, seed=seed)
         return energy, ms, resp
     elif solver == "numpy_annealer":
         import dimod
@@ -235,7 +235,8 @@ def _anneal(solver: str, annealer: OpenJijAnnealer, bqm, num_reads: int):
         return float(E[0]), sample_ms, resp
     import neal
     t0 = time.perf_counter()
-    resp = neal.SimulatedAnnealingSampler().sample(bqm, num_reads=num_reads)
+    kwargs = {"seed": seed} if seed is not None else {}
+    resp = neal.SimulatedAnnealingSampler().sample(bqm, num_reads=num_reads, **kwargs)
     return float(resp.first.energy), (time.perf_counter() - t0) * 1000.0, resp
 
 
@@ -373,7 +374,8 @@ def run_optimization(
             bqm = builder.build_bqm(weights, currents_q, {e: l.i_max for e, l in grid_qubo.lines.items()}, active)
             if t == 0:
                 n_vars, n_couplings, n_cycles = len(bqm.variables), len(bqm.quadratic), len(builder.cycle_edge_ids)
-            energy, ms, resp = _anneal(cfg.solver, annealer, bqm, cfg.num_reads)
+            step_seed = (cfg.seed + t) if cfg.seed is not None else None
+            energy, ms, resp = _anneal(cfg.solver, annealer, bqm, cfg.num_reads, seed=step_seed)
             active = annealer.extract_optimal_tree(resp, grid_qubo, weights, injections=scenario[t], current_switches=active)
         else:
             energy, ms = 0.0, base_latency_ms

@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 
 LOCAL_DIR = Path(__file__).resolve().parent
-DATA_PATH = LOCAL_DIR / "dashboard_data.json" if (LOCAL_DIR / "dashboard_data.json").exists() else Path(r"c:\ep-project\dashboard_data.json")
+DATA_PATH = LOCAL_DIR / "dashboard_data.json"
 OUTPUT_HTML = LOCAL_DIR / "dashboard.html"
 ARTIFACT_HTML = Path(r"C:\Users\Sharmesh Magesh\.gemini\antigravity-ide\brain\d599556f-ca50-403a-a517-344a12f58b32\executive_dashboard.html")
 

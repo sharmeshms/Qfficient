@@ -23,19 +23,22 @@ class OpenJijAnnealer:
         num_reads: int = 400,
         beta_min: float = 0.1,
         beta_max: float = 10.0,
-        trotter: int = 16
+        trotter: int = 16,
+        seed: Optional[int] = None,
     ) -> Tuple[Dict[int, int], float, float, Any]:
         """
         Executes quantum or classical annealing on the BQM.
         """
         start_time = time.perf_counter()
+        kwargs = {"seed": seed} if seed is not None else {}
 
         if self.use_sqa:
             sampler = oj.SQASampler()
             response = sampler.sample(
                 bqm,
                 num_reads=num_reads,
-                trotter=trotter
+                trotter=trotter,
+                **kwargs
             )
         else:
             sampler = oj.SASampler()
@@ -43,7 +46,8 @@ class OpenJijAnnealer:
                 bqm,
                 num_reads=num_reads,
                 beta_min=beta_min,
-                beta_max=beta_max
+                beta_max=beta_max,
+                **kwargs
             )
 
         elapsed_ms = (time.perf_counter() - start_time) * 1000.0

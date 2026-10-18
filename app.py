@@ -586,12 +586,33 @@ with tab_benchmark:
 
         st.dataframe(pd.DataFrame(rows), hide_index=True, **_w(st.dataframe))
 
-    st.markdown("""
-    ### Scientific Attribution & Reconciliation of the 22.27% Claim
-    * **Standard Baseline vs Strawman Baseline**: The standard textbook IEEE 33-bus baseline experiences **~4.98 MJ** of heat dissipation under these profiles. Comparing against this true baseline reveals that **exact dynamic reconfiguration yields -28.37% loss reduction** ($p = 2.15 \\times 10^{-8}$).
-    * **Role of Power-Flow Selection**: When 50 random radial spanning trees are sampled and evaluated via LinDistFlow (`random_trees_filtered`), they achieve **-20.06% loss reduction** ($p = 4.37 \\times 10^{-7}$). This proves that evaluating candidate trees through a power-flow selector is effective, and the previous 22.27% figure was an artifact of the power-flow filter and strawman baseline.
-    * **Raw QUBO Formulation**: The raw Hamiltonian lowest-energy state (`qubo_mesh_current_raw`) produces valid radial trees, but because linear objective weights do not capture the non-linear AC/LinDistFlow network effects, exact classical or hybrid power-flow-guided selection is necessary for optimal performance.
-    """)
+        base_h = summary_dict.get("standard_static", {}).get("heat_mj", {}).get("mean", 0.0)
+        oracle_test = tests_dict.get("exact_dynamic_oracle", {})
+        oracle_red = oracle_test.get("percent_loss_reduction", 0.0)
+        oracle_p = oracle_test.get("p_value_paired_t", 1.0)
+        oracle_p_str = f"{oracle_p:.2e}" if oracle_p < 0.001 else f"{oracle_p:.4f}"
+
+        rand_test = tests_dict.get("random_trees_filtered", {})
+        rand_red = rand_test.get("percent_loss_reduction", 0.0)
+        rand_p = rand_test.get("p_value_paired_t", 1.0)
+        rand_p_str = f"{rand_p:.2e}" if rand_p < 0.001 else f"{rand_p:.4f}"
+
+        qubo_test = tests_dict.get("qubo_mesh_current_filtered", {})
+        qubo_red = qubo_test.get("percent_loss_reduction", 0.0)
+        qubo_p = qubo_test.get("p_value_paired_t", 1.0)
+        qubo_p_str = f"{qubo_p:.2e}" if qubo_p < 0.001 else f"{qubo_p:.4f}"
+
+        corr_method = bench_data.get("metadata", {}).get("correction_method", "Paired t-test (two-sided)")
+
+        st.markdown(f"""
+        ### Scientific Attribution & Performance Analysis
+        *Sign convention: Heat reduction is positive (+) when better than the standard static baseline.*
+        * **Standard Baseline Performance**: The textbook IEEE 33-bus baseline dissipates **{base_h:.3f} MJ** of Joule heat across these scenarios.
+        * **Exact Dynamic Oracle**: Theoretical loss-minimizing reconfiguration achieves **+{oracle_red:.2f}% heat reduction** (p = {oracle_p_str}, {corr_method}).
+        * **Random Spanning Trees (Filtered)**: Sampling candidate trees and selecting via LinDistFlow loss yields **+{rand_red:.2f}% heat reduction** (p = {rand_p_str}, {corr_method}), confirming the significant attribution of candidate screening.
+        * **Thermodynamic QUBO (Filtered)**: Achieves **+{qubo_red:.2f}% heat reduction** (p = {qubo_p_str}, {corr_method}).
+        * **Raw QUBO Formulation**: Raw Hamiltonian sampling without power-flow ranking demonstrates that linear proxy weights alone do not capture higher-order AC line losses; hybrid selection or accurate loss formulation is critical for physical optimization.
+        """)
 
 # ---------------------------------------------------------------------------
 # Tab 3: limits
