@@ -11,9 +11,10 @@ This document honestly describes known limitations, assumptions, and bounded sco
 - Standard feeder benchmark is the textbook IEEE 33-Bus radial distribution feeder.
 - Custom procedural microgrids use synthetic topology generation bounded between 10 and 100 components.
 
-## 3. Synthetic Profile Data
-- Solar PV drop and EV charging surge transient profiles are generated using parameterized synthetic equations (`RenewableProfileSimulator`) with explicit pseudo-random seeds.
-- Field SCADA / real smart-meter telemetry is not bundled in the core repository.
+## 3. Synthetic Profile Data & Feeder Topologies
+- Solar PV drop and EV charging surge transient profiles are generated using parameterized synthetic equations (`RenewableProfileSimulator`, `Scenario.sample`) with explicit pseudo-random seeds.
+- Field SCADA / real utility smart-meter telemetry is not bundled in the core repository.
+- **IEEE 69-Bus Feeder Scope**: While the procedural generator scales up to 100 components, the textbook 69-bus distribution feeder and external live profiles (e.g. Pecan Street or NREL smart-meter traces) require citable, verified raw netlist files and are deferred to subsequent releases. Benchmark results in this repository are strictly grounded in the verified IEEE 33-bus system.
 
 ## 4. Voltage Security & Radiality Scope
 - Radial tree validity ($|V| - 1$ active lines with zero cycles and full connectivity) is strictly enforced by candidate screening and Kruskal-guided repair.

@@ -16,15 +16,22 @@ JSON_PATH = ROOT_DIR / "results" / "benchmark_summary.json"
 POLICY_DISPLAY_NAMES = {
     "standard_static": "Standard Static Baseline (IEEE 33 default)",
     "static_loss_optimal": "Static Loss-Optimal (Best static tree)",
-    "exact_dynamic_oracle": "Exact Dynamic Oracle (exact_oracle)",
+    "exact_dynamic_oracle": "Exact Dynamic Oracle",
+    "exact_oracle_hysteresis": "Exact Dynamic Oracle with Hysteresis (0.5 kW)",
+    "baran_wu_branch_exchange": "Baran-Wu Branch Exchange (Heuristic)",
+    "tree_simulated_annealing": "Simulated Annealing on Spanning Trees (No QUBO)",
     "random_trees_raw": "Random Spanning Trees (Raw)",
     "random_trees_filtered": "Random Spanning Trees (Filtered / PF ranked)",
     "qubo_mesh_current_raw": "Thermodynamic QUBO (Raw eigenvalue)",
+    "qubo_mesh_current_marginal_mst": "Thermodynamic QUBO (Marginal Spin MST, No PF Filter)",
     "qubo_mesh_current_repair_only": "Thermodynamic QUBO (Repair only, no PF ranking)",
     "qubo_mesh_current_filtered": "Thermodynamic QUBO (Repair + PF ranked)",
     "qubo_quadratic_loss_filtered": "Thermodynamic QUBO (Quadratic loss + PF ranked)",
-    "branch_exchange_heuristic": "Branch-Exchange Heuristic (Baran-Wu style)",
-    "genetic_algorithm_trees": "Genetic Algorithm / Simulated Annealing Trees",
+    "qubo_ablation_no_thermo": "QUBO Ablation (No Thermodynamic Term)",
+    "qubo_ablation_no_cycle": "QUBO Ablation (No Cycle Constraint)",
+    "qubo_ablation_no_rad": "QUBO Ablation (No Radiality Constraint)",
+    "qubo_ablation_no_cap": "QUBO Ablation (No Ampacity Constraint)",
+    "qubo_ablation_no_sw": "QUBO Ablation (No Switching Penalty)",
 }
 
 

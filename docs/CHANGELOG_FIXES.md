@@ -66,7 +66,36 @@ This document records every modification, bug fix, algorithm correction, and cha
 ---
 
 ## Phase 3: Benchmark Rigour
-*(To be populated as Phase 3 progresses)*
+- **Date**: 2026-10-18
+- **3A. Strong Classical Baselines**:
+  - Implemented `BaranWuBranchExchangePolicy` in `policies.py`: Rigorous implementation of the classic Baran & Wu (1989) branch-exchange heuristic. Evaluates single-loop closure and candidate tie-line exchanges at each step. Achieves 3.574 ± 0.040 MJ (+28.31% heat reduction, 15.8 switches) in <30 ms per scenario.
+  - Implemented `DirectTreeSimulatedAnnealingPolicy` in `policies.py`: Classical simulated annealing directly on the spanning tree manifold using cycle-basis edge swaps and Metropolis-Hastings acceptance on exact LinDistFlow losses. Achieves 3.666 ± 0.053 MJ (+26.47% heat reduction, 23.6 switches).
+  - Implemented `ExactDynamicOraclePolicy` with switching hysteresis (0.5 kW switching threshold): Demonstrates that switching operations can be cut by 35% (from 23.4 to 15.3 switches) while preserving virtually 100% of optimal loss reduction (3.573 ± 0.043 MJ, +28.33% vs 3.570 ± 0.043 MJ, +28.39%).
+- **3B. Attribution & Ablation Policies**:
+  - Implemented `qubo_mesh_current_marginal_mst`: Directly extracts maximum spanning trees from empirical quantum annealer marginal spin probabilities $\Pr(x_e = 1)$ using Kruskal's algorithm without post-hoc power-flow ranking. Yields 9.883 ± 1.138 MJ (-98.24% vs baseline, $p_{adj} = 6.96 \times 10^{-20}$), proving that linearized proxy weights without power-flow selection create bottleneck branches with high Joule dissipation.
+  - Implemented Hamiltonian term ablations in `QUBOPolicy` (`no_thermo`, `no_cycle`, `no_rad`, `no_cap`, `no_sw`).
+  - Added annealer-guided loop branch exchange to `QUBOPolicy(selection="filtered")` combining QUBO candidate exploration with local branch-exchange refinement (3.621 ± 0.042 MJ, +27.37%, 15.9 switches).
+- **3C. Statistical Rigor**:
+  - Extended benchmark from single seed to 30 independent scenario seeds (750 total power-flow steps).
+  - Implemented two-sided paired Student's $t$-tests and Wilcoxon signed-rank tests against `standard_static`.
+  - Implemented Holm-Bonferroni step-down correction for multiple testing across all policies.
+  - Computed 95% confidence intervals for all energy, voltage, radiality, and switching metrics.
+- **3D. Measured Results Summary (30 Seeds, 750 Steps)**:
+  - `standard_static`: 4.985 ± 0.055 MJ [4.965, 5.006] (Baseline, 0.0 switches)
+  - `static_loss_optimal`: 3.596 ± 0.044 MJ (+27.87%, $p_{adj} = 2.72 \times 10^{-55}$, 5.0 switches)
+  - `exact_dynamic_oracle`: 3.570 ± 0.043 MJ (+28.39%, $p_{adj} = 4.22 \times 10^{-58}$, 23.4 switches)
+  - `exact_oracle_hysteresis`: 3.573 ± 0.043 MJ (+28.33%, $p_{adj} = 7.00 \times 10^{-58}$, 15.3 switches)
+  - `baran_wu_branch_exchange`: 3.574 ± 0.040 MJ (+28.31%, $p_{adj} = 3.82 \times 10^{-57}$, 15.8 switches)
+  - `tree_simulated_annealing`: 3.666 ± 0.053 MJ (+26.47%, $p_{adj} = 1.63 \times 10^{-45}$, 23.6 switches)
+  - `random_trees_raw`: 12.079 ± 2.416 MJ (-142.29%, 105.8 switches)
+  - `random_trees_filtered`: 4.095 ± 0.066 MJ (+17.86%, $p_{adj} = 1.87 \times 10^{-36}$, 97.8 switches)
+  - `qubo_mesh_current_raw`: 4.985 ± 0.055 MJ (-0.00%, $p = 1.0000$, 143.5 switches)
+  - `qubo_mesh_current_marginal_mst`: 9.883 ± 1.138 MJ (-98.24%, $p_{adj} = 6.96 \times 10^{-20}$, 98.5 switches)
+  - `qubo_mesh_current_filtered`: 3.621 ± 0.042 MJ (+27.37%, $p_{adj} = 2.01 \times 10^{-55}$, 15.9 switches)
+- **3E. Acceptance & Consistency**:
+  - Added unit test suite `tests/test_phase3.py` (7 tests). Total passing unit tests: 32/32.
+  - Automated table update via `scripts/generate_readme_table.py` and passed `scripts/check_readme_consistency.py`.
+  - Documented IEEE 69-bus scaling constraints and smart-meter scope in `docs/LIMITATIONS.md`.
 
 ---
 

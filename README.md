@@ -64,14 +64,18 @@ Evaluated across **5 independent renewable/load fluctuation profiles** over 25 t
 <!-- RESULTS_TABLE_START -->
 | Policy / Algorithm | Total Joule Heat (MJ) [Mean ± Std] | Heat Reduction vs Std. Baseline (%) | $p$-value ($t$-test) | Peak Conductor Temp (°C) | Voltage Violations (steps) | Switch Operations | Decision Latency (ms) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Standard Static Baseline (IEEE 33 default)** | $4.980 \pm 0.068$ | *Reference* | — | $26.5^\circ\text{C}$ | $18.4$ | $0.0$ | $0.00\text{ ms}$ |
-| **Static Loss-Optimal (Best static tree)** | $3.592 \pm 0.045$ | **+27.87%** | 3.34e-08 | $26.0^\circ\text{C}$ | $5.4$ | $5.0$ | $0.00\text{ ms}$ |
-| **Exact Dynamic Oracle (exact_oracle)** | $3.567 \pm 0.045$ | **+28.37%** | 2.15e-08 | $25.9^\circ\text{C}$ | $5.2$ | $21.6$ | $38.98\text{ ms}$ |
-| **Random Spanning Trees (Raw)** | $11.709 \pm 1.720$ | -135.11% | 9.52e-04 | $26.6^\circ\text{C}$ | $22.0$ | $106.6$ | $0.04\text{ ms}$ |
-| **Random Spanning Trees (Filtered / PF ranked)** | $3.981 \pm 0.065$ | **+20.06%** | 4.37e-07 | $26.0^\circ\text{C}$ | $4.6$ | $93.8$ | $8.35\text{ ms}$ |
-| **Thermodynamic QUBO (Raw eigenvalue)** | $29.895 \pm 2.155$ | -500.28% | 1.35e-05 | $31.3^\circ\text{C}$ | $25.0$ | $51.4$ | $368.10\text{ ms}$ |
-| **Thermodynamic QUBO (Repair + PF ranked)** | $4.845 \pm 0.092$ | **+2.71%** | 0.0061 | $26.2^\circ\text{C}$ | $14.4$ | $95.8$ | $331.40\text{ ms}$ |
-*Benchmark parameters: 5 scenarios, 25 time steps ($dt = 2.0\text{ s}$), seeds: 1000.., correction: Paired t-test / Wilcoxon signed-rank. Generated from `python run_benchmark.py`.*
+| **Standard Static Baseline (IEEE 33 default)** | $4.985 \pm 0.055$ | *Reference* | — | $26.5^\circ\text{C}$ | $18.6$ | $0.0$ | $0.00\text{ ms}$ |
+| **Static Loss-Optimal (Best static tree)** | $3.596 \pm 0.044$ | **+27.87%** | 4.54e-56 | $26.0^\circ\text{C}$ | $6.1$ | $5.0$ | $0.00\text{ ms}$ |
+| **Exact Dynamic Oracle** | $3.570 \pm 0.043$ | **+28.39%** | 4.22e-59 | $25.9^\circ\text{C}$ | $5.6$ | $23.4$ | $78.79\text{ ms}$ |
+| **Exact Dynamic Oracle with Hysteresis (0.5 kW)** | $3.573 \pm 0.043$ | **+28.33%** | 7.78e-59 | $25.9^\circ\text{C}$ | $5.7$ | $15.3$ | $79.48\text{ ms}$ |
+| **Baran-Wu Branch Exchange (Heuristic)** | $3.574 \pm 0.040$ | **+28.31%** | 4.77e-58 | $26.0^\circ\text{C}$ | $4.2$ | $15.8$ | $29.94\text{ ms}$ |
+| **Simulated Annealing on Spanning Trees (No QUBO)** | $3.666 \pm 0.053$ | **+26.47%** | 3.26e-46 | $26.0^\circ\text{C}$ | $4.4$ | $23.6$ | $19.68\text{ ms}$ |
+| **Random Spanning Trees (Raw)** | $12.079 \pm 2.416$ | -142.29% | 4.89e-16 | $26.8^\circ\text{C}$ | $22.2$ | $105.8$ | $0.07\text{ ms}$ |
+| **Random Spanning Trees (Filtered / PF ranked)** | $4.095 \pm 0.066$ | **+17.86%** | 4.68e-37 | $26.0^\circ\text{C}$ | $6.3$ | $97.8$ | $9.57\text{ ms}$ |
+| **Thermodynamic QUBO (Raw eigenvalue)** | $4.985 \pm 0.055$ | -0.00% | 1.0000 | $26.5^\circ\text{C}$ | $18.6$ | $143.5$ | $283.62\text{ ms}$ |
+| **Thermodynamic QUBO (Marginal Spin MST, No PF Filter)** | $9.883 \pm 1.138$ | -98.24% | 2.32e-20 | $26.7^\circ\text{C}$ | $20.8$ | $98.5$ | $293.93\text{ ms}$ |
+| **Thermodynamic QUBO (Repair + PF ranked)** | $3.621 \pm 0.042$ | **+27.37%** | 2.87e-56 | $25.9^\circ\text{C}$ | $4.4$ | $15.9$ | $304.74\text{ ms}$ |
+*Benchmark parameters: 30 scenarios, 25 time steps ($dt = 2.0\text{ s}$), seeds: 1000..1029, correction: Paired t-test with Holm-Bonferroni step-down correction (alpha = 0.05). Generated from `python run_benchmark.py --n 30 --steps 25`.*
 <!-- RESULTS_TABLE_END -->
 
 ### 2. Scientific Claim Reconciliation
