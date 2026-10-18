@@ -58,7 +58,7 @@ Conductors heat up quadratically with electric current ($P = 3 I^2 R$). High lin
 | **Interactive UI** | **Streamlit** | `>=1.35.0` | Web dashboard with interactive parameter sliders, topology viewer, and real-time report cards. |
 | **Visualization** | **Matplotlib** | `>=3.8.0` | 300-DPI publication figures, 4-panel transient dynamics plots, and microgrid network layouts. |
 | **CLI Formatting** | **tabulate** | `>=0.10.0` | Formatted terminal output tables for simulation summaries. |
-| **Test Automation** | **pytest** | `>=8.0.0` | 17 unit and physics validation tests ensuring radiality and mathematical integrity. |
+| **Test Automation** | **pytest** | `>=8.0.0` | 42 unit and physics validation tests ensuring radiality and mathematical integrity. |
 | **Containerization** | **Docker & Docker Compose** | Multi-stage | Containerization based on `python:3.11-slim` with healthcheck orchestration. |
 
 ---
@@ -102,7 +102,7 @@ $$H(x) = \lambda_{\text{thermo}} H_{\text{thermo}}(x) + \lambda_{\text{cycle}} H
 ## 4. Project Architecture & File-by-File Blueprint
 
 ```
-c:/ep-project/
+Qfficient/
 ├── app.py                             # Interactive Streamlit Web Portal & Report Card UI
 ├── main_experiment.py                 # Primary simulation & 4-panel transient dynamics figure generator
 ├── run_benchmark.py                   # Multi-scenario statistical benchmark & ablation suite
@@ -123,11 +123,16 @@ c:/ep-project/
 │   ├── benchmark_distribution.png     # Metric distribution plots across scenarios
 │   ├── benchmark_raw.json             # Full step-by-step telemetry data
 │   └── benchmark_summary.json         # Mean, standard deviation, and p-value aggregates
-├── tests/                             # Pytest test suite (17 passed tests)
+├── tests/                             # Pytest test suite (42 passed tests)
 │   ├── test_custom_grid.py            # Scalability tests for 10-100 component grids
 │   ├── test_fast_flow.py              # LinDistFlow power flow verification tests
+│   ├── test_phase1.py                 # Engine correctness & power flow accuracy tests
+│   ├── test_phase3.py                 # 30-scenario benchmark & baseline validation tests
+│   ├── test_phase4.py                 # Science improvements & sensitivity tests
+│   ├── test_phase5.py                 # Quantum hardware runner & backend attribution tests
 │   ├── test_pipeline.py               # End-to-end pipeline & schema integrity tests
-│   └── test_qubo_grid.py              # Physics equations & QUBO penalty matrix tests
+│   ├── test_qubo_grid.py              # Physics equations & QUBO penalty matrix tests
+│   └── test_readme_consistency.py     # Results and documentation consistency tests
 └── thermodynamic_grid_qubo/           # Core library package
     ├── pipeline.py                    # Unified optimization pipeline & config dataclasses
     ├── grid_engine/                   # Power grid topologies and thermal dynamics
@@ -268,11 +273,11 @@ python run_custom_60.py
 Executes a multi-scenario statistical ablation study with Student's $t$-tests and p-value validation.
 
 ```bash
-# Run benchmark across 5 scenarios:
-python run_benchmark.py --n 5
+# Research-grade 30-scenario benchmark (750 steps, Holm-Bonferroni correction):
+python run_benchmark.py --n 30 --steps 25
 
-# Comprehensive study across 20 scenarios into a custom output folder:
-python run_benchmark.py --n 20 --output-dir results
+# Quick verification run across 5 scenarios:
+python run_benchmark.py --n 5
 ```
 
 **Outputs Created in `results/`**:
@@ -298,34 +303,33 @@ thermo-qubo-gui
 ---
 
 ### 6.6 Automated Test Suite Execution (pytest)
-Runs 17 unit and physics verification tests across 4 modules.
+Runs 42 unit and physics verification tests across 9 test modules.
 
 ```bash
 # Run all tests:
-.venv\Scripts\python.exe -m pytest
+pytest tests/
 
 # Run tests with verbose output:
-.venv\Scripts\python.exe -m pytest -v
-
-# Run individual test files:
-.venv\Scripts\python.exe -m pytest tests/test_custom_grid.py
-.venv\Scripts\python.exe -m pytest tests/test_fast_flow.py
-.venv\Scripts\python.exe -m pytest tests/test_pipeline.py
-.venv\Scripts\python.exe -m pytest tests/test_qubo_grid.py
+pytest tests/ -v
 ```
 
 ---
 
 ## 7. Solver Engines & Policy Comparative Analysis
 
-| Policy / Solver Identifier | Algorithm Description | Loss Reduction | ANSI C84.1 Compliant | Mean Latency | Primary Application |
+| Policy / Solver Identifier | Algorithm Description | Loss Reduction vs Baseline | ANSI C84.1 Compliant | Mean Latency | Primary Application |
 | :--- | :--- | :---: | :---: | :---: | :--- |
-| `exact_dynamic_oracle` | Global exact loss minimization via dynamic branch-exchange | **+28.37%** | Yes | 38.98 ms | Theoretical upper-bound benchmark. |
-| `static_loss_optimal` | Loss-optimal static spanning tree without dynamic switching | **+27.87%** | Yes | 0.00 ms | High-efficiency static baseline. |
-| `sqa` (OpenJij) | Simulated Quantum Annealing with transverse field schedule | **Dynamic** | Yes | ~330 ms | Real-time quantum-inspired solving. |
-| `numpy_annealer` | Vectorized local-search simulated annealing | **Dynamic** | Yes | ~15 ms | High-speed local embedded solver. |
-| `dwave_qpu_runner` | Physical quantum annealer (D-Wave Advantage) via Leap API | **Dynamic** | Yes | Cloud | Hardware quantum execution. |
+| `exact_dynamic_oracle` | Global exact loss minimization via dynamic branch-exchange | **+28.39%** | Monitored | 78.79 ms | Theoretical upper-bound benchmark. |
+| `exact_oracle_hysteresis` | Exact dynamic oracle with 0.5 kW switching threshold (35% wear cut) | **+28.33%** | Monitored | 79.48 ms | Practical loss-optimal dynamic control. |
+| `baran_wu_branch_exchange` | Classic single-loop branch exchange heuristic (Baran & Wu 1989) | **+28.31%** | Monitored | 29.94 ms | High-speed production classical heuristic. |
+| `static_loss_optimal` | Loss-optimal static spanning tree without dynamic switching | **+27.87%** | Monitored | 0.00 ms | High-efficiency static baseline. |
+| `qubo_mesh_current_filtered` | Thermodynamic QUBO screening with annealer loop branch exchange | **+27.37%** | Monitored | 304.74 ms | Hybrid quantum-classical optimization. |
+| `tree_simulated_annealing` | Markov Chain simulated annealing directly on spanning tree manifold | **+26.47%** | Monitored | 19.68 ms | Classical stochastic tree baseline. |
+| `random_trees_filtered` | Random spanning tree candidate ensemble with LinDistFlow filter | **+17.86%** | Monitored | 9.57 ms | Screening attribution baseline. |
+| `qubo_mesh_current_raw` | Raw QUBO lowest-energy eigenvalue state (no post-hoc filter) | **-0.00%** | Monitored | 283.62 ms | Unfiltered QUBO attribution baseline. |
 | `standard_static` | Unreconfigured standard textbook network (tie switches open) | **0.00%** | Baseline | 0.00 ms | Real-world legacy baseline. |
+| `qubo_mesh_current_marginal_mst` | Spanning tree from annealer spin marginals (no power-flow filter) | **-98.24%** | Monitored | 293.93 ms | Proxy weight bottleneck demonstration. |
+| `dwave_qpu_runner` | Physical quantum annealer (D-Wave Advantage) via Leap API | **Dynamic** | Hardware | Telemetry | Hardware quantum execution path. |
 
 ### D-Wave QPU Hardware Submission
 To execute the QUBO on physical quantum hardware:

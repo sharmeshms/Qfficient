@@ -25,16 +25,16 @@
 ## 2. Key Scientific Findings & Claim Attribution
 
 1. **Reconciliation of Performance Claims**:
-   - The textbook IEEE 33 static baseline incurs an average of **~4.98 MJ** of heat dissipation under these benchmark transients.
-   - **Exact Dynamic Oracle** (`exact_dynamic_oracle`) confirms that theoretical loss-minimizing reconfiguration achieves **~28.4% loss reduction** with sub-50 ms decision times.
-   - **Exact Oracle with Hysteresis** (`exact_oracle_hysteresis`) matches the theoretical optimum (~28.4%) while significantly reducing switch wear.
-   - **Classic Baran-Wu Branch Exchange** (`baran_wu_branch_exchange`) provides an exceptionally strong classical heuristic, achieving **~28.1% loss reduction** in < 1 ms per decision.
-   - **Simulated Annealing on Trees** (`tree_simulated_annealing`) achieves **~25.4% reduction** directly on the spanning tree manifold without QUBO mapping.
+   - The textbook IEEE 33 static baseline incurs an average of **4.985 ± 0.055 MJ** of heat dissipation under these benchmark transients.
+   - **Exact Dynamic Oracle** (`exact_dynamic_oracle`) confirms that theoretical loss-minimizing reconfiguration achieves **+28.39% loss reduction** ($3.570 \pm 0.043\text{ MJ}$, adjusted $p = 4.22 \times 10^{-58}$) with 78.79 ms decision latency.
+   - **Exact Oracle with Hysteresis** (`exact_oracle_hysteresis`) achieves **+28.33% loss reduction** ($3.573 \pm 0.043\text{ MJ}$) while reducing switch wear by 35% (15.3 vs 23.4 operations).
+   - **Classic Baran-Wu Branch Exchange** (`baran_wu_branch_exchange`) provides an exceptionally strong classical heuristic, achieving **+28.31% loss reduction** ($3.574 \pm 0.040\text{ MJ}$, adjusted $p = 3.82 \times 10^{-57}$) in 29.94 ms per scenario.
+   - **Simulated Annealing on Trees** (`tree_simulated_annealing`) achieves **+26.47% loss reduction** ($3.666 \pm 0.053\text{ MJ}$) directly on the spanning tree manifold without QUBO mapping in 19.68 ms.
 
 2. **Thermodynamic QUBO Attribution**:
-   - **Raw QUBO Formulation** (`qubo_mesh_current_raw`): Evaluated strictly by lowest-energy eigenvalue without post-hoc power-flow filtering. Because linear proxy weights do not capture non-linear AC line interactions, raw lowest-energy configurations do not reduce AC losses relative to the standard static baseline.
-   - **Marginal Spin Ensemble MST** (`qubo_mesh_current_marginal_mst`): Extracting maximum spanning trees directly from empirical quantum annealer spin probabilities produces topologically valid radial trees, but demonstrates that quantum spin frequencies alone without power-flow loss guidance do not optimize AC dissipation.
-   - **Thermodynamic QUBO with Annealer-Guided Loop Exchange** (`qubo_mesh_current_filtered`): Utilizing the QUBO Hamiltonian to identify candidate loop tie-lines followed by LinDistFlow loss validation yields **~27.1% loss reduction** with the fewest switch operations among dynamic methods.
+   - **Raw QUBO Formulation** (`qubo_mesh_current_raw`): Evaluated strictly by lowest-energy eigenvalue without post-hoc power-flow filtering. Because linear proxy weights do not capture non-linear AC line interactions, raw lowest-energy configurations do not reduce AC losses relative to the standard static baseline (-0.00% reduction).
+   - **Marginal Spin Ensemble MST** (`qubo_mesh_current_marginal_mst`): Extracting maximum spanning trees directly from empirical quantum annealer spin probabilities produces topologically valid radial trees, but demonstrates that quantum spin frequencies alone without power-flow loss guidance do not optimize AC dissipation (-98.24% relative loss, 9.883 MJ).
+   - **Thermodynamic QUBO with Annealer-Guided Loop Exchange** (`qubo_mesh_current_filtered`): Utilizing the QUBO Hamiltonian to identify candidate loop tie-lines followed by LinDistFlow loss validation yields **+27.37% loss reduction** ($3.621 \pm 0.042\text{ MJ}$, adjusted $p = 2.01 \times 10^{-55}$) with only 15.9 switch operations.
 
 3. **Engineering Conclusion**:
    - Thermodynamic entropy mapping provides an elegant physical formulation for representing distribution grid topologies on Ising architectures.
