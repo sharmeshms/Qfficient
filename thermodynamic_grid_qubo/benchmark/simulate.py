@@ -94,16 +94,42 @@ class Scenario:
             timeline=timeline,
         )
 
+    @classmethod
+    def sample_heatwave_long(
+        cls,
+        seed: int = 42,
+        time_steps: int = 40,
+        dt_seconds: float = 60.0,
+        load_scale: float = 1.35,
+        ev_surge_kw: float = 900.0,
+    ) -> "Scenario":
+        """Generates long-horizon (2400 s, dt=60s) high-stress scenario for thermal dynamics evaluation."""
+        return cls.sample(
+            seed=seed,
+            time_steps=time_steps,
+            dt_seconds=dt_seconds,
+            cloud_depth=0.80,
+            ev_surge_kw=ev_surge_kw,
+            load_scale=load_scale,
+        )
+
 
 def simulate(
     policy: Policy,
     sc: Scenario,
     grid: Optional[DistributionGrid] = None,
     trace: bool = False,
+    ambient_c: Optional[float] = None,
 ) -> Dict[str, Any]:
     """Executes a simulation scenario under the specified reconfiguration policy."""
     if grid is None:
         grid = IEEEFeederLoader.load_ieee33()
+
+    if ambient_c is not None:
+        t_amb_k = ambient_c + 273.15
+        for line in grid.lines.values():
+            line.t_amb = t_amb_k
+            line.temp = t_amb_k
 
     fast = FastFeeder(grid)
     policy.reset(grid, fast, sc.timeline)

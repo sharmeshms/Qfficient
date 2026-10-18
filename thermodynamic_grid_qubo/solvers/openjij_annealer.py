@@ -122,13 +122,19 @@ class OpenJijAnnealer:
         entropy_weights: Dict[int, float],
         injections: Optional[Dict[int, Tuple[float, float]]] = None,
         current_switches: Optional[Dict[int, int]] = None,
-        switching_threshold_kw: float = 0.5
+        switching_threshold_kw: float = 0.5,
+        enforce_voltage_limits: bool = False,
+        voltage_penalty_weight: float = 0.0,
     ) -> Dict[int, int]:
         """
         Extracts the lowest-loss, physically valid radial tree from the quantum sample distribution
         that satisfies ANSI C84.1 voltage constraints and reduces Joule heat dissipation.
         Handles large grids (N >= 30) where raw combinatorial spin-flip sampling requires
         quantum-ensemble projection and loop-exchange repair.
+
+        Parameters:
+            enforce_voltage_limits: if True, rejects candidates violating 0.95 - 1.05 pu ANSI band.
+            voltage_penalty_weight: penalty scaling factor added to loss for voltage deviations outside band.
         """
         import networkx as nx
         from ..verification.physics_verifier import PhysicsVerifier
@@ -245,10 +251,19 @@ class OpenJijAnnealer:
             if injections is not None:
                 v_ok, v_pu, cur, total_loss_kw = verifier.solve_power_flow(cand, injections)
                 min_v = min(v_pu.values()) if v_pu else 1.0
+                max_v = max(v_pu.values()) if v_pu else 1.0
+                v_viol = (min_v < 0.95) or (max_v > 1.05)
+                
+                if enforce_voltage_limits and v_viol:
+                    continue
+
+                v_dev = max(0.0, 0.95 - min_v) + max(0.0, max_v - 1.05)
+                effective_loss = total_loss_kw + voltage_penalty_weight * (v_dev * 1000.0)
+
                 # Must be within ANSI limits or improve upon baseline voltage
                 voltage_acceptable = v_ok if base_v_ok else (min_v >= base_min_v - 0.005)
-                if voltage_acceptable and (total_loss_kw + wear_thresh < min_loss):
-                    min_loss = total_loss_kw
+                if voltage_acceptable and (effective_loss + wear_thresh < min_loss):
+                    min_loss = effective_loss
                     best_sample = cand
             else:
                 cost = sum(entropy_weights.get(e, 1.0) for e, val in cand.items() if val == 1)

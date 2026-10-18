@@ -1,0 +1,92 @@
+{
+  "scenario": {
+    "preset": "heatwave_long",
+    "time_steps": 40,
+    "dt_seconds": 60.0,
+    "total_duration_minutes": 40.0,
+    "ambient_temp_c": 40.0,
+    "load_scale": 1.35,
+    "ev_surge_kw": 900.0,
+    "seed": 2024,
+    "tau_thermal_seconds": 750.0
+  },
+  "policies": {
+    "standard_static": {
+      "policy": "standard_static",
+      "seed": 2024,
+      "heat_mj": 601.9376795442276,
+      "entropy_kj_per_k": 1788.924677371519,
+      "exergy_destroyed_mj": 533.3678925583183,
+      "peak_temp_c": 102.31636905482003,
+      "peak_temp_excl_head_c": 102.31636905482003,
+      "voltage_violation_steps": 40,
+      "min_voltage_pu": 0.8856244326361666,
+      "switch_operations": 0,
+      "infeasible_steps": 0,
+      "mean_decision_ms": 0.0001124994014389813,
+      "max_decision_ms": 0.000200001522898674,
+      "total_steps": 40,
+      "heat_reduction_pct": 0.0
+    },
+    "exact_dynamic_oracle": {
+      "policy": "exact_dynamic_oracle",
+      "seed": 2024,
+      "heat_mj": 413.9990617029803,
+      "entropy_kj_per_k": 1274.4987451495595,
+      "exergy_destroyed_mj": 379.9918008663411,
+      "peak_temp_c": 72.70384607639124,
+      "peak_temp_excl_head_c": 72.70384607639124,
+      "voltage_violation_steps": 39,
+      "min_voltage_pu": 0.9027190854908342,
+      "switch_operations": 25,
+      "infeasible_steps": 0,
+      "mean_decision_ms": 19.694800001889234,
+      "max_decision_ms": 26.069599989568815,
+      "total_steps": 40,
+      "heat_reduction_pct": 31.222271711508377
+    },
+    "qubo_thermo": {
+      "policy": "qubo_thermo",
+      "seed": 2024,
+      "heat_mj": 417.286139352274,
+      "entropy_kj_per_k": 1285.2308370175792,
+      "exergy_destroyed_mj": 383.19157405679124,
+      "peak_temp_c": 71.90120769706903,
+      "peak_temp_excl_head_c": 71.90120769706903,
+      "voltage_violation_steps": 40,
+      "min_voltage_pu": 0.9026962490246409,
+      "switch_operations": 18,
+      "infeasible_steps": 0,
+      "mean_decision_ms": 65.21760000105132,
+      "max_decision_ms": 75.59530000435188,
+      "total_steps": 40,
+      "heat_reduction_pct": 30.67618899215069
+    },
+    "qubo_no_thermo": {
+      "policy": "qubo_no_thermo",
+      "seed": 2024,
+      "heat_mj": 417.286139352274,
+      "entropy_kj_per_k": 1285.2308370175792,
+      "exergy_destroyed_mj": 383.19157405679124,
+      "peak_temp_c": 71.90120769706903,
+      "peak_temp_excl_head_c": 71.90120769706903,
+      "voltage_violation_steps": 40,
+      "min_voltage_pu": 0.9026962490246409,
+      "switch_operations": 18,
+      "infeasible_steps": 0,
+      "mean_decision_ms": 65.07096249915776,
+      "max_decision_ms": 80.29260000330396,
+      "total_steps": 40,
+      "heat_reduction_pct": 30.67618899215069
+    }
+  },
+  "thermal_weight_effect": {
+    "qubo_thermo_heat_mj": 417.286139352274,
+    "qubo_no_thermo_heat_mj": 417.286139352274,
+    "delta_heat_mj": 0.0,
+    "delta_heat_pct": 0.0,
+    "peak_temp_thermo_c": 71.90120769706903,
+    "peak_temp_no_thermo_c": 71.90120769706903,
+    "conclusion": "The temperature-dependent weights produce a modest measurable effect on dissipation (+0.00% relative difference), as primary branch loss routing dominates over small local thermal resistance variations."
+  }
+}

@@ -387,16 +387,27 @@ class QUBOPolicy(Policy):
         num_reads: int = 25,
         selection: str = "filtered",
         weight_mode: str = "mesh_current",
+        voltage_aware: bool = False,
+        dynamic_thermal_weights: bool = True,
         ablation: Optional[str] = None,
+        name: Optional[str] = None,
         seed: int = 42,
     ):
         self.sampler = sampler or NumpyAnnealer(sweeps=40, seed=seed)
         self.num_reads = num_reads
         self.selection = selection
         self.weight_mode = weight_mode
+        self.voltage_aware = voltage_aware
+        self.dynamic_thermal_weights = dynamic_thermal_weights
         self.ablation = ablation
-        if ablation:
+        if name:
+            self.name = name
+        elif ablation:
             self.name = f"qubo_ablation_{ablation}"
+        elif not dynamic_thermal_weights:
+            self.name = f"qubo_{weight_mode}_{selection}_no_thermal_weights"
+        elif voltage_aware:
+            self.name = f"qubo_{weight_mode}_{selection}_vaware"
         else:
             self.name = f"qubo_{weight_mode}_{selection}"
         self.builder: Optional[ThermodynamicQUBOBuilder] = None
@@ -425,6 +436,7 @@ class QUBOPolicy(Policy):
             lambda_cap=l_cap,
             lambda_sw=l_sw,
             cycle_mode="elementary",
+            weight_mode=self.weight_mode,
         )
 
     def _repair_to_tree(self, active_edges: Set[int], fast: FastFeeder, weights: Dict[int, float]) -> Tuple[int, ...]:
@@ -452,18 +464,20 @@ class QUBOPolicy(Policy):
     def decide(self, ctx: DecisionContext) -> Tuple[Tuple[int, ...], float]:
         t0 = time.perf_counter()
         # Compute mesh currents for non-zero weights on all lines
-        temps_dict = {e: ctx.temps_k[i] for i, e in enumerate(ctx.fast.edge_ids)}
+        temps_dict = {e: (ctx.temps_k[i] if self.dynamic_thermal_weights else 298.15) for i, e in enumerate(ctx.fast.edge_ids)}
         i_mesh = mesh_branch_currents(ctx.grid, ctx.injections, temps_dict)
 
         weights = {}
         for i, e in enumerate(ctx.fast.edge_ids):
             line = ctx.grid.lines[e]
             i_val = i_mesh.get(e, 30.0)
+            r_val = ctx.resistances[i] if self.dynamic_thermal_weights else ctx.fast.r0[i]
+            t_val = ctx.temps_k[i] if self.dynamic_thermal_weights else 298.15
             if self.weight_mode == "flow_preserving":
-                weights[i] = (i_val ** 2) * ctx.resistances[i] / max(ctx.temps_k[i], 273.15)
+                weights[i] = (i_val ** 2) * r_val / max(t_val, 273.15)
             else:
-                p_loss = 3.0 * (i_val ** 2) * ctx.resistances[i]
-                weights[i] = p_loss / max(ctx.temps_k[i], 273.15)
+                p_loss = 3.0 * (i_val ** 2) * r_val
+                weights[i] = p_loss / max(t_val, 273.15)
 
         prev_map = {i: (1 if i in ctx.prev_active else 0) for i in range(ctx.fast.m)}
         qubo_model = self.builder.build_model(
@@ -557,6 +571,8 @@ class QUBOPolicy(Policy):
 
             for t in candidate_set:
                 ok, _, _, loss, v_min = ctx.fast.evaluate(t, ctx.p_pu, ctx.q_pu, ctx.resistances)
+                if self.voltage_aware and v_min < 0.95:
+                    continue
                 if ok and v_min >= 0.90 and loss < best_loss:
                     best_loss = loss
                     best_t = t

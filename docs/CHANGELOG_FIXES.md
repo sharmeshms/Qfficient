@@ -100,7 +100,34 @@ This document records every modification, bug fix, algorithm correction, and cha
 ---
 
 ## Phase 4: Science Improvements
-*(To be populated as Phase 4 progresses)*
+- **Date**: 2026-10-18
+- **4.1. Quadratic Loss Encoding**:
+  - Implemented `weight_mode="quadratic_loss"` in `ThermodynamicQUBOBuilder` (`qubo_builder.py`) and `QUBOPolicy` (`policies.py`), citing Soler et al. (2012) and Mahdavi et al. (2021).
+  - Formulated quadratic cross-terms $Q_{ab} = \lambda_{thermo} \cdot (w_a w_b / w_{max}) \cdot 0.5$ for co-cyclic branches to penalize simultaneous closure and loop current dissipation.
+  - Kept `"mesh_current"` as default for backward compatibility.
+- **4.2. Voltage-Aware Candidate Selection**:
+  - Enhanced `extract_optimal_tree` in `solvers/openjij_annealer.py` with optional `enforce_voltage_limits: bool = False` (rejects candidates violating 0.95–1.05 pu ANSI band) and `voltage_penalty_weight: float = 0.0`.
+  - Added `voltage_aware: bool = False` flag to `QUBOPolicy` (`qubo_{weight_mode}_{selection}_vaware`).
+- **4.3. Thermal Dynamics Experiment (Long-Horizon Heatwave)**:
+  - Created `scripts/run_thermal_experiment.py` and scenario generator `Scenario.sample_heatwave_long()` in `simulate.py`.
+  - Tested 40-step long horizon (2400 s, $dt = 60\text{ s}$, > $3\times$ thermal time constant $\tau = 750\text{ s}$) under severe heatwave conditions ($T_{amb} = 40^\circ\text{C}$, 1.35x load, 900 kW EV surge).
+  - Measured results:
+    - `standard_static`: 601.938 MJ, Peak Temp: 102.3°C, 0 switches.
+    - `exact_dynamic_oracle`: 413.999 MJ (+31.22% reduction), Peak Temp: 72.7°C, 25 switches.
+    - `qubo_thermo`: 417.286 MJ (+30.68% reduction), Peak Temp: 71.9°C, 18 switches.
+    - `qubo_no_thermo`: 417.286 MJ (+30.68% reduction), Peak Temp: 71.9°C, 18 switches.
+  - Measured finding: The thermal term effect is +0.00% on switching decisions because discrete topological routing and load-induced current distributions dominate over small (~5%) local resistance shifts. Generated `results/thermal_experiment.json` and `results/thermal_experiment.png`.
+- **4.4. Entropy-vs-Heat Correlation Analysis**:
+  - Created `scripts/analyze_entropy_vs_heat.py` evaluating 300 simulation runs (30 scenarios $\times$ 10 policies).
+  - Measured correlation: Pearson $r = 1.000000$ ($p = 0.00$), Spearman $\rho = 0.999981$, $R^2 = 1.000000$.
+  - Linear regression: $\text{Entropy\_Red}\% = 0.9996 \times \text{Heat\_Red}\% - 0.0215$.
+  - Proved that entropy generation $S_{gen} = \int (P_{loss} / T) dt$ is virtually collinear with Joule heat dissipation because temperature variations across feeder lines remain small (~1–3%) relative to absolute temperature (298.15 K). Generated `results/entropy_vs_heat.json` and `results/entropy_vs_heat.png`.
+- **4.5. Penalty Weight Sensitivity Sweep**:
+  - Created `scripts/sweep_penalty_weights.py` sweeping multipliers from 0.1x to 10.0x for $\lambda_{thermo}, \lambda_{cycle}, \lambda_{rad}, \lambda_{cap}, \lambda_{sw}$.
+  - Documented formulas in docstrings and generated 5-panel figure `results/penalty_sensitivity.png` and `results/penalty_sensitivity.json`.
+  - Confirmed that $\lambda_{cycle} \ge 25.0$ eliminates closed elementary loops, and $\lambda_{rad} \ge 30.0$ stabilizes tree branch density at $|E| = 32$.
+- **4.6. Test Coverage & Acceptance**:
+  - Created `tests/test_phase4.py` (6 unit tests). Total project unit tests passing: 38/38.
 
 ---
 

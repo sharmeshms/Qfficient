@@ -1,0 +1,66 @@
+{
+  "n_samples": 300,
+  "pearson_r": 0.9999998514634664,
+  "pearson_p": 0.0,
+  "spearman_rho": 0.9999808695671517,
+  "spearman_p": 0.0,
+  "r_squared": 0.999999702926956,
+  "linear_fit": {
+    "slope": 0.99957590105031,
+    "intercept": -0.02151292522043846,
+    "std_err": 3.156016991826709e-05
+  },
+  "policy_averages": {
+    "static_loss_optimal": {
+      "mean_heat_reduction_pct": 27.873640272381046,
+      "mean_entropy_reduction_pct": 27.842251750692935,
+      "discrepancy_pct": 0.031388521688111126
+    },
+    "exact_dynamic_oracle": {
+      "mean_heat_reduction_pct": 28.3873603713087,
+      "mean_entropy_reduction_pct": 28.352437948768202,
+      "discrepancy_pct": 0.03492242254049671
+    },
+    "exact_oracle_hysteresis": {
+      "mean_heat_reduction_pct": 28.332116345399704,
+      "mean_entropy_reduction_pct": 28.300883231415533,
+      "discrepancy_pct": 0.031233113984171723
+    },
+    "baran_wu_branch_exchange": {
+      "mean_heat_reduction_pct": 28.307596632951423,
+      "mean_entropy_reduction_pct": 28.2743513303981,
+      "discrepancy_pct": 0.03324530255332192
+    },
+    "tree_simulated_annealing": {
+      "mean_heat_reduction_pct": 26.468103756999604,
+      "mean_entropy_reduction_pct": 26.436778443737776,
+      "discrepancy_pct": 0.03132531326182786
+    },
+    "random_trees_raw": {
+      "mean_heat_reduction_pct": -142.21245162977272,
+      "mean_entropy_reduction_pct": -142.20808157084528,
+      "discrepancy_pct": 0.004370058927435139
+    },
+    "random_trees_filtered": {
+      "mean_heat_reduction_pct": 17.862158411747465,
+      "mean_entropy_reduction_pct": 17.830134069736303,
+      "discrepancy_pct": 0.03202434201116233
+    },
+    "qubo_mesh_current_raw": {
+      "mean_heat_reduction_pct": 0.0,
+      "mean_entropy_reduction_pct": 0.0,
+      "discrepancy_pct": 0.0
+    },
+    "qubo_mesh_current_marginal_mst": {
+      "mean_heat_reduction_pct": -98.30623937594501,
+      "mean_entropy_reduction_pct": -98.27205565187093,
+      "discrepancy_pct": 0.03418372407408299
+    },
+    "qubo_mesh_current_filtered": {
+      "mean_heat_reduction_pct": 27.371022988625953,
+      "mean_entropy_reduction_pct": 27.335193179902422,
+      "discrepancy_pct": 0.035829808723530476
+    }
+  },
+  "physical_interpretation": "Because entropy generation is defined as S_dot = P_loss / T and conductor temperature variations across feeder branches remain within ~3% of absolute ambient temperature (298.15 K), entropy reduction is virtually identical to Joule heat dissipation reduction (Pearson r > 0.999). Minimizing thermodynamic entropy generation rate S_dot is mathematically equivalent to minimizing Ohmic loss P_loss under quasi-isothermal operating conditions."
+}

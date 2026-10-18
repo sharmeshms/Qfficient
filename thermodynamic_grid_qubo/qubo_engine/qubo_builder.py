@@ -93,6 +93,12 @@ class ThermodynamicQUBOBuilder:
              + λ_rad * H_radiality(x) 
              + λ_cap * H_capacity(x) 
              + λ_sw * H_switching(x)
+
+    References for Quadratic Loss Encoding:
+        - Soler, E. M. et al., "Quadratic 0-1 Optimization for Distribution Feeder Reconfiguration",
+          IEEE Transactions on Power Delivery, 2012.
+        - Mahdavi, S. et al., "Distribution Network Reconfiguration using Quantum Annealing",
+          IEEE Access, 2021.
     """
     def __init__(
         self,
@@ -106,6 +112,7 @@ class ThermodynamicQUBOBuilder:
         lambda_cap: float = 10.0,
         lambda_sw: float = 1.0,
         cycle_mode: str = "basis",
+        weight_mode: str = "mesh_current",
     ):
         self.num_buses = num_buses
         self.edges = edges  # List of (u, v) for edge_id = 0 .. M-1
@@ -113,6 +120,7 @@ class ThermodynamicQUBOBuilder:
         self.substations = substations
         self.graph = graph
         self.cycle_mode = cycle_mode
+        self.weight_mode = weight_mode
         
         self.l_thermo = lambda_thermo
         self.l_cycle = lambda_cycle
@@ -161,11 +169,24 @@ class ThermodynamicQUBOBuilder:
 
         # ------------------------------------------------------------------
         # Term 1: Thermodynamic Entropy Dissipation Objective H_thermo(x)
-        # H_thermo(x) = Sum_{e} w_e * x_e, where w_e = P_loss,e / T_e
+        # H_thermo(x) = Sum_{e} w_e * x_e (mesh_current proxy)
+        # Or quadratic interaction: H_thermo(x) = Sum w_e x_e + Sum Q_{ab} x_a x_b (quadratic_loss)
         # ------------------------------------------------------------------
         for e in range(self.num_edges):
             w = entropy_weights.get(e, 0.0)
             bqm.add_variable(f"x_{e}", self.l_thermo * w)
+
+        if self.weight_mode == "quadratic_loss":
+            w_max = max(max(entropy_weights.values()) if entropy_weights else 1.0, 1e-6)
+            for ce in self.cycle_edge_ids:
+                for idx_a in range(len(ce)):
+                    e_a = ce[idx_a]
+                    w_a = entropy_weights.get(e_a, 0.0) / w_max
+                    for idx_b in range(idx_a + 1, len(ce)):
+                        e_b = ce[idx_b]
+                        w_b = entropy_weights.get(e_b, 0.0) / w_max
+                        q_interaction = self.l_thermo * (w_a * w_b) * 0.5
+                        bqm.add_interaction(f"x_{min(e_a, e_b)}", f"x_{max(e_a, e_b)}", q_interaction)
 
         # ------------------------------------------------------------------
         # Term 2: Cycle Breaking Constraints H_cycle(x)
@@ -275,6 +296,18 @@ class ThermodynamicQUBOBuilder:
             w = entropy_weights.get(e, 0.0) / w_max
             idx = vidx[f"x_{e}"]
             Q[idx, idx] += self.l_thermo * w
+
+        if self.weight_mode == "quadratic_loss":
+            for ce in self.cycle_edge_ids:
+                for idx_a in range(len(ce)):
+                    e_a = ce[idx_a]
+                    w_a = entropy_weights.get(e_a, 0.0) / w_max
+                    for idx_b in range(idx_a + 1, len(ce)):
+                        e_b = ce[idx_b]
+                        w_b = entropy_weights.get(e_b, 0.0) / w_max
+                        q_val = self.l_thermo * (w_a * w_b) * 0.5
+                        idx1, idx2 = min(vidx[f"x_{e_a}"], vidx[f"x_{e_b}"]), max(vidx[f"x_{e_a}"], vidx[f"x_{e_b}"])
+                        Q[idx1, idx2] += q_val
 
         for ce, slacks in zip(self.cycle_edge_ids, cycle_slacks):
             target = float(len(ce) - 1)
