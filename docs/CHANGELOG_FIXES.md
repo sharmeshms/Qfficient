@@ -151,7 +151,21 @@ This document records every modification, bug fix, algorithm correction, and cha
 ---
 
 ## Phase 6: Documentation Rewrite
-*(To be populated as Phase 6 progresses)*
+- **Date**: 2026-10-18
+- **6.1. README.md Comprehensive Rewrite**:
+  - Added Section 4: "Quantum Scope & Physical Hardware Path" articulating the honest attribution policy (all reported benchmarks ran on classical execution backends) and minor embedding analysis on D-Wave Advantage Pegasus topologies (150–320 physical qubits for $K_{37}$ clique).
+  - Added Section 5: "Thermodynamic Entropy vs. Joule Heat Dissipation" presenting empirical collinearity proof ($r = 1.000000, R^2 = 1.000000$) and 40-minute heatwave finding (+0.00% switching decision delta under dynamic thermal weights).
+  - Added Section 6: "Lagrange Multiplier Heuristics & Sensitivity" documenting `PenaltyTuner` dynamic scaling equations and sensitivity sweep boundaries ($\lambda_{\text{cycle}} \ge 25.0$ for zero elementary cycle violations, $\lambda_{\text{rad}} \ge 30.0$ for exact tree cardinality).
+  - Added Section 7: "Data Scope & Synthetic Profiles" clarifying the standard IEEE 33-bus benchmark baseline and parameterized synthetic profile generation without real SCADA data.
+  - Fixed ANSI C84.1 text formatting in claim reconciliation section.
+  - Updated Table of Contents, test badge (42/42 tests passing), and Quickstart table.
+- **6.2. METHOD.md Scientific Specification**:
+  - Authored `docs/METHOD.md` detailing the complete mathematical problem formulation, AC DistFlow and LinDistFlow power-flow equations with accuracy benchmark against independent reference solver (matching to 0.0001%), conductor transient heat balance with $T_{\text{ref}} = 298.15\text{ K}$, QUBO Hamiltonian compilation with elementary cycle slack derivation, and classical/quantum solver mechanisms.
+- **6.3. Audit Registry & Scope Boundary Documentation**:
+  - Updated `docs/KNOWN_ISSUES.md` marking ISSUE-01 through ISSUE-06 as Resolved with specific fix descriptions.
+  - Documented open scope boundaries (ISSUE-07 for IEEE 69-bus feeder data, ISSUE-08 for utility SCADA telemetry, and ISSUE-09 for cloud QPU Leap credentials).
+- **6.4. Consistency Verification**:
+  - Verified that `scripts/generate_readme_table.py` and `scripts/check_readme_consistency.py` run cleanly without discrepancies.
 
 ---
 

@@ -2,13 +2,12 @@
 
 # ⚡ Qfficient: Thermodynamic-Mapped QUBO for Dynamic Microgrid Distribution
 ### *Next-Generation Distribution Network Reconfiguration via Non-Equilibrium Thermodynamics, Fast LinDistFlow, and Quantum Annealing*
-
 [![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Live Demo](https://img.shields.io/badge/Live_Demo-GitHub_Pages-2ea44f?style=for-the-badge&logo=github&logoColor=white)](https://sharmeshms.github.io/Qfficient/)
-[![Quantum](https://img.shields.io/badge/Quantum-D--Wave%20%7C%20OpenJij%20%7C%20Neal-4A154B?style=for-the-badge&logo=quantum&logoColor=white)](https://www.dwavesys.com/)
+[![Quantum-inspired](https://img.shields.io/badge/Quantum--inspired-QUBO--Ready-4A154B?style=for-the-badge&logo=quantum&logoColor=white)](docs/QUANTUM_HARDWARE.md)
 [![Framework](https://img.shields.io/badge/Streamlit-2.0%20App-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-Passing%20(17%2F17)-brightgreen?style=for-the-badge&logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-Passing%20(42%2F42)-brightgreen?style=for-the-badge&logo=pytest&logoColor=white)](tests/)
 [![Grid Scale](https://img.shields.io/badge/Grid%20Scale-10%20to%20100%20Components-orange?style=for-the-badge&logo=target&logoColor=white)](#-custom-microgrid-generator-10-to-100-components)
 
 <p align="center">
@@ -23,16 +22,19 @@
 1. [Executive Summary & Problem Context](#-executive-summary--problem-context)
 2. [Complete Technical Stack & Operational User Manual](#-complete-technical-stack--operational-user-manual)
 3. [Proven Experimental Outcomes & Claim Reconciliation](#-proven-experimental-outcomes--claim-reconciliation)
-4. [Core Physics & Non-Equilibrium Thermodynamics](#-core-physics--non-equilibrium-thermodynamics)
-5. [Thermodynamic QUBO & Ising Formulation](#-thermodynamic-qubo--ising-formulation)
-6. [Custom Microgrid Generator (10 to 100 Components)](#-custom-microgrid-generator-10-to-100-components)
-7. [Multi-Solver Architecture & Scalable Quantum Annealing](#-multi-solver-architecture--scalable-quantum-annealing)
-8. [Visual Diagnostics & Network Topologies](#-visual-diagnostics--network-topologies)
-9. [Interactive Review Portal (Streamlit 2.0 Web Dashboard)](#-interactive-review-portal-streamlit-20-web-dashboard)
-10. [Minute-by-Minute Engineering Changelog](#-minute-by-minute-engineering-changelog)
-11. [Quickstart & CLI Commands](#-quickstart--cli-commands)
-12. [Repository Architecture](#-repository-architecture)
-13. [License & Citation](#-license--citation)
+4. [Quantum Scope & Physical Hardware Path](#-quantum-scope--physical-hardware-path)
+5. [Thermodynamic Entropy vs. Joule Heat Dissipation](#-thermodynamic-entropy-vs-joule-heat-dissipation)
+6. [Lagrange Multiplier Heuristics & Sensitivity](#-lagrange-multiplier-heuristics--sensitivity)
+7. [Data Scope & Synthetic Profiles](#-data-scope--synthetic-profiles)
+8. [Core Physics & Non-Equilibrium Thermodynamics](#-core-physics--non-equilibrium-thermodynamics)
+9. [Thermodynamic QUBO & Ising Formulation](#-thermodynamic-qubo--ising-formulation)
+10. [Custom Microgrid Generator (10 to 100 Components)](#-custom-microgrid-generator-10-to-100-components)
+11. [Multi-Solver Architecture & Scalable Quantum Annealing](#-multi-solver-architecture--scalable-quantum-annealing)
+12. [Visual Diagnostics & Network Topologies](#-visual-diagnostics--network-topologies)
+13. [Interactive Review Portal (Streamlit 2.0 Web Dashboard)](#-interactive-review-portal-streamlit-20-web-dashboard)
+14. [Quickstart & CLI Commands](#-quickstart--cli-commands)
+15. [Repository Architecture](#-repository-architecture)
+16. [License & Citation](#-license--citation)
 
 ---
 
@@ -59,7 +61,7 @@ For a comprehensive, end-to-end technical reference with step-by-step CLI walkth
 ## 🏆 Proven Experimental Outcomes & Claim Reconciliation
 
 ### 1. IEEE 33-Bus Benchmark (Rigorous Research-Grade Evaluation)
-Evaluated across **5 independent renewable/load fluctuation profiles** over 25 time steps ($dt = 2.0\text{ s}$) using IEEE 33-Bus benchmark parameters ($V_{\text{base}} = 12.66\text{ kV}$, $S_{\text{base}} = 10\text{ MVA}$, ANSI C84.1 voltage band $[0.95, 1.05]\text{ p.u.}$):
+Evaluated across **30 independent pseudo-random scenarios** (750 total power-flow steps, seeds 1000..1029) over 25 time steps ($dt = 2.0\text{ s}$) using IEEE 33-Bus benchmark parameters ($V_{\text{base}} = 12.66\text{ kV}$, $S_{\text{base}} = 10\text{ MVA}$, ANSI C84.1 voltage band $[0.95, 1.05]\text{ p.u.}$):
 
 <!-- RESULTS_TABLE_START -->
 | Policy / Algorithm | Total Joule Heat (MJ) [Mean ± Std] | Heat Reduction vs Std. Baseline (%) | $p$-value ($t$-test) | Peak Conductor Temp (°C) | Voltage Violations (steps) | Switch Operations | Decision Latency (ms) |
@@ -78,11 +80,107 @@ Evaluated across **5 independent renewable/load fluctuation profiles** over 25 t
 *Benchmark parameters: 30 scenarios, 25 time steps ($dt = 2.0\text{ s}$), seeds: 1000..1029, correction: Paired t-test with Holm-Bonferroni step-down correction (alpha = 0.05). Generated from `python run_benchmark.py --n 30 --steps 25`.*
 <!-- RESULTS_TABLE_END -->
 
-### 2. Scientific Claim Reconciliation
-* **Empirical Verification of the 22.5% Claim**: Early iterations reported a 22.5% reduction relative to a static-resistance minimum spanning tree baseline. In our research-grade benchmark (`results/BENCHMARK_REPORT.md`), the true theoretical ceiling established by the **Exact Dynamic Oracle** achieves **28.37% loss reduction** ($p = 2.15 \times 10^{-8}$) over the textbook IEEE 33 static configuration.
-* **Filter Necessity in Pure QUBO**: Pure unconstrained QUBO relies on a linearized mesh-current objective ($H = \sum w_e x_e$). Combining quantum sample distributions with fast LinDistFlow screening or Kruskal-guided loop repair guarantees **100% valid radial spanning trees** and complete ANSI C84.1 compliance across all steps.
+### 2. Scientific Claim Reconciliation & Attribution
+* **Empirical Verification of Loss Reduction Claims**:
+  - The theoretical optimum established by the **Exact Dynamic Oracle** achieves **+28.39% loss reduction** ($3.570 \pm 0.043\text{ MJ}$ vs $4.985 \pm 0.055\text{ MJ}$, adjusted $p = 4.22 \times 10^{-58}$) relative to the textbook IEEE-33 static baseline.
+  - Classic **Baran-Wu Branch Exchange** (1989) achieves **+28.31% loss reduction** ($3.574 \pm 0.040\text{ MJ}$, adjusted $p = 3.82 \times 10^{-57}$) in under $30\text{ ms}$ per scenario, demonstrating that classical branch exchange heuristics perform comparably to exact combinatorial search on 33-bus topologies.
+  - Adding a $0.5\text{ kW}$ switching hysteresis threshold (`exact_oracle_hysteresis`) cuts breaker operations by **35%** (from 23.4 to 15.3 switches) while preserving virtually 100% of optimal loss reduction (+28.33% vs +28.39%).
+* **Honest Attribution of Pure QUBO vs. Filtering**:
+  - **Raw QUBO Ground States** (`qubo_mesh_current_raw`): Evaluated strictly by lowest-energy eigenvalue without post-hoc power-flow filtering. Because linear proxy weights do not capture non-linear AC line interactions, raw lowest-energy configurations do not reduce AC losses relative to the standard static baseline (-0.00% reduction).
+  - **Marginal Spin Ensemble MST** (`qubo_mesh_current_marginal_mst`): Extracting maximum spanning trees directly from quantum annealer spin probabilities $\Pr(x_e = 1)$ yields valid radial trees but results in -98.24% loss relative to baseline (9.883 MJ vs 4.985 MJ). This proves that proxy weights without power-flow loss selection create bottleneck branches with high Joule dissipation.
+  - **Thermodynamic QUBO Filtered** (`qubo_mesh_current_filtered`): Screening quantum candidates and refining via annealer-guided loop branch exchanges achieves **+27.37% loss reduction** ($3.621 \pm 0.042\text{ MJ}$, adjusted $p = 2.01 \times 10^{-55}$).
+* **Radiality vs. Voltage Security**:
+  - Radial tree validity ($|V|-1$ lines, connected, zero cycles) is strictly enforced by construction and Kruskal loop repair.
+  - Voltage compliance is evaluated and monitored via LinDistFlow/AC power flow; it is **reported, not mathematically guaranteed** by the unconstrained QUBO alone. Under severe peak load without reactive support, voltages dip below 0.95 pu (4.4 to 18.6 violation steps). Complete ANSI C84.1 compliance is never claimed unless measured.
 
 ---
+
+## 🌌 Quantum Scope & Physical Hardware Path
+
+### 1. Honest Backend Attribution Policy
+Every simulation and benchmark reported in this repository complies with our strict **Honest Attribution Policy**:
+* **No Cloud QPU Execution in Reported Benchmarks**: All numerical benchmark outcomes reported in `results/` were evaluated using **classical execution backends**:
+  - `exact_oracle` / `exact_oracle_hysteresis`: Deterministic combinatorial search over valid spanning trees via vectorized AC / LinDistFlow.
+  - `baran_wu_branch_exchange`: Deterministic classical heuristic algorithm (Baran & Wu, 1989).
+  - `tree_simulated_annealing`: Classical Metropolis-Hastings Markov Chain Monte Carlo over spanning trees.
+  - `openjij_annealer`: Classical Markov Chain Monte Carlo Simulated Quantum Annealing (SQA) executed on host CPUs.
+  - `numpy_annealer` / `neal`: Classical Simulated Annealing (SA) executed on host CPUs.
+* **No Stale or Deceptive Claims**: Software execution logs strictly record `solver_backend` (`"classical_exact_oracle"`, `"sqa_classical_simulation"`, `"neal_classical_sa"`, or `"local_fallback"`). Fallback simulations are **never** labeled as quantum hardware execution.
+
+### 2. Direct Hardware Interface (D-Wave Advantage QPU)
+The repository contains an end-to-end, production-grade hardware submission interface (`DWaveQPURunner` in `thermodynamic_grid_qubo/solvers/dwave_qpu_runner.py`) ready for physical quantum execution:
+* **Supported Backends**:
+  - `dwave_qpu`: Submits directly to physical D-Wave Advantage QPUs via `DWaveSampler` and `EmbeddingComposite`.
+  - `dwave_hybrid`: Submits to D-Wave Leap hybrid quantum-classical solvers (`LeapHybridSampler`).
+* **Pegasus Minor Embedding Analysis**:
+  - The radiality constraint $(\sum_{e} x_e - 32)^2$ introduces all-to-all quadratic couplings, creating a complete graph clique $K_{37}$ (666 non-zero couplings).
+  - On D-Wave Advantage QPUs with Pegasus topology (degree 15), embedding $K_{37}$ requires minor embedding with chain lengths between 2 and 6 physical qubits, expanding 37 logical variables into **150 to 320 physical qubits**.
+  - Programmed chain strength $\ge 2.0 \times \max|J_{ij}|$ prevents chain breaks under strong radial penalties.
+* **Hardware Readiness**: See [`docs/QUANTUM_HARDWARE.md`](docs/QUANTUM_HARDWARE.md) for complete hardware submission workflows, API token configuration, and embedding telemetry.
+
+---
+
+## ⚖️ Thermodynamic Entropy vs. Joule Heat Dissipation
+
+### 1. Collinearity Analysis
+A core scientific question addressed in our research is whether explicitly compiling non-equilibrium thermodynamic entropy generation $\dot{S}_{\text{gen}} = \dot{Q} / T$ provides distinct topological routing decisions compared to direct Joule heat minimization $\dot{Q} = 3 I^2 R$.
+
+We conducted an empirical correlation analysis (`scripts/analyze_entropy_vs_heat.py`) across 300 independent simulation runs (30 scenario seeds $\times$ 10 optimization policies):
+* **Pearson Correlation**: $r = 1.000000$ ($p < 10^{-300}$)
+* **Spearman Rank Correlation**: $\rho = 0.999981$ ($p < 10^{-300}$)
+* **Coefficient of Determination**: $R^2 = 1.000000$
+* **Linear Regression Model**:
+  $$\text{Entropy Reduction } (\%) = 0.9996 \times \text{Heat Reduction } (\%) - 0.0215$$
+
+<p align="center">
+  <img src="results/entropy_vs_heat.png" alt="Entropy vs Joule Heat Dissipation Correlation" width="700">
+</p>
+
+### 2. Physical Mechanism
+The near-perfect mathematical collinearity arises from the thermodynamics of distribution feeders:
+1. Conductor operating temperatures in overhead and underground lines fluctuate between $25^\circ\text{C}$ and $75^\circ\text{C}$ ($298.15\text{ K}$ to $348.15\text{ K}$).
+2. In absolute Kelvin units, temperature variations span less than $3\%$ relative to ambient reference temperature $T_0 = 298.15\text{ K}$.
+3. Under quasi-isothermal conditions, the thermodynamic factor $\frac{1}{T_e(t)} \approx \frac{1}{T_0}$ behaves as a near-constant scalar multiplier. Consequently, **minimizing non-equilibrium thermodynamic entropy generation is physically and mathematically equivalent to minimizing Ohmic Joule losses**.
+
+### 3. Long-Horizon Heatwave Simulation
+In our 40-minute heatwave experiment (`scripts/run_thermal_experiment.py`, $T_{\text{amb}} = 40^\circ\text{C}$, 1.35x load surge, 900 kW EV charging pulse):
+* `qubo_thermo` (dynamic thermal resistance feedback) achieved **+30.68% loss reduction** (417.286 MJ, peak conductor temp 71.9°C, 18 switches).
+* `qubo_no_thermo` (static reference resistance) achieved the **exact same +30.68% loss reduction** (417.286 MJ, peak conductor temp 71.9°C, 18 switches).
+* **Finding**: The thermal term effect is **+0.00% on discrete switching decisions**. Large branch current disparities induced by load and generation topology dominate combinatorial switch selection over local ~5% thermal resistance adjustments.
+
+---
+
+## 🎛️ Lagrange Multiplier Heuristics & Sensitivity
+
+### 1. Dynamic Adaptive Penalty Scaling
+The composite QUBO Hamiltonian balances the thermodynamic dissipation objective with four operational constraints. To prevent constraint violations under steep load swings, `PenaltyTuner` dynamically scales penalties using current and temperature feedback:
+
+$$\lambda_{\text{cycle}} = \lambda_{\text{cycle},0} \cdot \left(\frac{I_{\text{mean}}}{I_{\text{base}}}\right)^2 \cdot \left(1 + \frac{T_{\text{max}} - T_0}{50}\right)$$
+
+$$\lambda_{\text{rad}} = \lambda_{\text{rad},0} \cdot \left(\frac{I_{\text{mean}}}{I_{\text{base}}}\right)^2, \quad \lambda_{\text{cap}} = \lambda_{\text{cap},0} \cdot \left(\frac{I_{\text{max}}}{I_{\text{base}}}\right)^2, \quad \lambda_{\text{sw}} = \lambda_{\text{sw},0} \cdot \left(\frac{I_{\text{base}}}{I_{\text{mean}}}\right)$$
+
+### 2. Parametric Sensitivity Sweep
+We executed an automated parametric sensitivity sweep (`scripts/sweep_penalty_weights.py`, multipliers from 0.1x to 10.0x):
+
+<p align="center">
+  <img src="results/penalty_sensitivity.png" alt="QUBO Penalty Multiplier Sensitivity Sweep" width="850">
+</p>
+
+* **Cycle Breaking ($\lambda_{\text{cycle}}$)**: At multipliers $< 0.5\text{x}$ ($\lambda_{\text{cycle}} < 12.5$), quantum annealers produce closed loops in elementary cycles. Multipliers $\ge 1.0\text{x}$ ($\lambda_{\text{cycle}} \ge 25.0$) guarantee 100% loop-free configurations.
+* **Radiality ($\lambda_{\text{rad}}$)**: Multipliers $< 0.3\text{x}$ yield disconnected networks ($|E| \ne 32$). Multipliers $\ge 1.0\text{x}$ ($\lambda_{\text{rad}} \ge 30.0$) strictly enforce $|E| = |V| - 1 = 32$.
+* **Switching Wear ($\lambda_{\text{sw}}$)**: Multipliers in the range $[0.5, 5.0]$ smoothly suppress unnecessary switch toggling without degrading loss optimality.
+
+---
+
+## 📋 Data Scope & Synthetic Profiles
+
+### 1. Benchmark Grid Topologies
+* **IEEE 33-Bus Feeder**: The core evaluation topology is the standard textbook Baran & Wu (1989) 33-bus radial distribution system ($12.66\text{ kV}$, $10\text{ MVA}$ base, 33 buses, 32 sectionalizing branches, 5 normally-open tie switches).
+* **Procedural Custom Microgrids**: Topologies from 10 to 100 components are procedurally generated using synthetic graph layouts with guaranteed connectivity, central spine trunks, and branching laterals.
+
+### 2. Synthetic Transient Profiles
+* **Stochastic Fluctuation Models**: Solar PV intermittency, wind fluctuations, BESS charge/discharge cycles, and EV charging pulses are modeled via parameterized synthetic time-series (`RenewableProfileSimulator`, `Scenario.sample`) using explicit pseudo-random seeds.
+* **No Real-World Utility SCADA Data**: The repository uses synthetic benchmark profiles for reproducible open-source evaluation. No proprietary utility smart-meter or live SCADA recordings are included.
 
 ## 🔬 Core Physics & Non-Equilibrium Thermodynamics
 
@@ -324,12 +422,12 @@ pip install -r requirements.txt
 | **Launch Dashboard** | `streamlit run app.py` | Full interactive review portal & custom grid designer |
 | **Standalone Web Suite**| Open `dashboard.html` | Self-contained single-page executive web app with SVG topology |
 | **Build HTML Dashboard**| `python build_dashboard_html.py` | Compiles simulation telemetry into `dashboard.html` |
-| **Run Benchmark** | `python run_benchmark.py` | 100-scenario statistical evaluation with LaTeX tables |
+| **Run Benchmark** | `python run_benchmark.py --n 30 --steps 25` | 30-scenario statistical evaluation with LaTeX tables |
 | **Custom 60-Bus Grid** | `python run_custom_grid.py --components 60 --ties 6` | Generates 60-component microgrid and runs optimization |
 | **Custom 40-Bus Script** | `python run_custom_40.py` | Evaluates 40-component microgrid with transient plots |
 | **Custom 60-Bus Script** | `python run_custom_60.py` | Evaluates 60-component microgrid with transient plots |
 | **IEEE 33-Bus Visualizer**| `python visualize_microgrid.py` | Generates high-res `optimized_microgrid.png` |
-| **Run Test Suite** | `pytest tests/` | Runs all 17 unit and physics verification tests |
+| **Run Test Suite** | `pytest tests/` | Runs all 42 unit and physics verification tests |
 
 ### 3. One-Click Launchers
 * **Windows**: Double-click `run_dashboard.bat`
