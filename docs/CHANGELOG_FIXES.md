@@ -132,7 +132,21 @@ This document records every modification, bug fix, algorithm correction, and cha
 ---
 
 ## Phase 5: Quantum Hardware Path
-*(To be populated as Phase 5 progresses)*
+- **Date**: 2026-10-18
+- **5.1. Direct Physical QPU & Hybrid Path**:
+  - Overhauled `DWaveQPURunner` (`solvers/dwave_qpu_runner.py`) with support for direct physical QPU (`DWaveSampler` + `EmbeddingComposite`) and cloud Leap Hybrid (`LeapHybridSampler`).
+  - Added full hardware telemetry capture: logical variables, physical qubits, max chain length, chain strength, chain-break fraction, programmed annealing time, reads, and wall-clock latency.
+- **5.2. Honest Backend Attribution**:
+  - Solvers strictly report `solver_backend` as `"qpu"`, `"hybrid"`, or `"local_fallback"`.
+  - Runs failing or lacking credentials default to classical Neal simulated annealing and are never labeled as quantum hardware execution.
+- **5.3. Pipeline Integration**:
+  - Exposed `"dwave_qpu"` and `"dwave_hybrid"` in `pipeline.py` when `DWAVE_API_TOKEN` is detected.
+  - Added `solver_backend` to the optimization result dictionary for all solvers (`"classical_exact_oracle"`, `"sqa_classical_simulation"`, `"neal_classical_sa"`, `"numpy_classical_vectorized"`, `"classical_baseline"`).
+- **5.4. Hardware Documentation & Embedding Analysis**:
+  - Created `docs/QUANTUM_HARDWARE.md` detailing how to run on D-Wave Advantage hardware, minor embedding requirements on Pegasus topologies for complete graphs $K_{37}$ (150–320 physical qubits), and strict attribution policies.
+- **5.5. Unit Testing & Limitation Logging**:
+  - Documented lack of physical QPU API credentials in `docs/LIMITATIONS.md`.
+  - Added `tests/test_phase5.py` (4 unit tests) validating fallback behavior, mocked QPU embedding metrics, mocked hybrid solver, and pipeline backend tags. Total passing tests: 42/42.
 
 ---
 

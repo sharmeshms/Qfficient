@@ -9,6 +9,7 @@ line flows, losses and metrics all come from the solver / power-flow runs.
 from __future__ import annotations
 
 import copy
+import os
 import time
 import uuid
 from dataclasses import dataclass, asdict
@@ -52,6 +53,10 @@ SOLVER_CHOICES = {
     "neal": "D-Wave Neal (Simulated Annealing)",
     "classical": "Classical Minimum-Resistance Baseline",
 }
+
+if os.environ.get("DWAVE_API_TOKEN"):
+    SOLVER_CHOICES["dwave_qpu"] = "D-Wave Direct QPU (Advantage Quantum Annealer)"
+    SOLVER_CHOICES["dwave_hybrid"] = "D-Wave Leap Hybrid Quantum-Classical Solver"
 
 
 class GridSizeError(ValueError):
@@ -215,10 +220,10 @@ class ParametricScenario(RenewableProfileSimulator):
 # Solver dispatch
 # ---------------------------------------------------------------------------
 def _anneal(solver: str, annealer: OpenJijAnnealer, bqm, num_reads: int, seed: Optional[int] = None):
-    """Returns (energy, latency_ms, response) for sqa / neal / numpy_annealer."""
+    """Returns (energy, latency_ms, response, solver_backend) for sqa / neal / numpy_annealer / dwave."""
     if solver == "sqa":
         _s, energy, ms, resp = annealer.solve(bqm, num_reads=num_reads, seed=seed)
-        return energy, ms, resp
+        return energy, ms, resp, "sqa_classical_simulation"
     elif solver == "numpy_annealer":
         import dimod
         t0 = time.perf_counter()
@@ -232,17 +237,31 @@ def _anneal(solver: str, annealer: OpenJijAnnealer, bqm, num_reads: int, seed: O
         X, E, sample_ms = NumpyAnnealer(sweeps=80).sample(q_mat, num_reads=num_reads, offset=offset)
         samples = [{var_list[i]: int(X[r, i]) for i in range(N)} for r in range(len(X))]
         resp = dimod.SampleSet.from_samples(samples, vartype=dimod.BINARY, energy=E)
-        return float(E[0]), sample_ms, resp
+        return float(E[0]), sample_ms, resp, "numpy_classical_vectorized"
+    elif solver in ("dwave_qpu", "dwave_hybrid"):
+        from .solvers.dwave_qpu_runner import DWaveQPURunner
+        b_type = "qpu" if solver == "dwave_qpu" else "hybrid"
+        runner = DWaveQPURunner(backend=b_type)
+        _s, energy, ms, resp = runner.solve(bqm, num_reads=num_reads)
+        return energy, ms, resp, runner.solver_backend
     import neal
     t0 = time.perf_counter()
     kwargs = {"seed": seed} if seed is not None else {}
     resp = neal.SimulatedAnnealingSampler().sample(bqm, num_reads=num_reads, **kwargs)
-    return float(resp.first.energy), (time.perf_counter() - t0) * 1000.0, resp
+    return float(resp.first.energy), (time.perf_counter() - t0) * 1000.0, resp, "neal_classical_sa"
 
 
 def estimate_runtime_s(cfg: OptimizationConfig, n_lines: int) -> float:
     """Rough wall-clock estimate (seconds) for the UI."""
-    per_read_var_ms = {"sqa": 0.42, "neal": 0.035, "numpy_annealer": 0.005, "exact_oracle": 0.0, "classical": 0.0}.get(cfg.solver, 0.02)
+    per_read_var_ms = {
+        "sqa": 0.42,
+        "neal": 0.035,
+        "numpy_annealer": 0.005,
+        "exact_oracle": 0.0,
+        "classical": 0.0,
+        "dwave_qpu": 0.05,
+        "dwave_hybrid": 0.05,
+    }.get(cfg.solver, 0.02)
     return cfg.time_steps * (cfg.num_reads * n_lines * per_read_var_ms / 1000.0 + 0.05)
 
 
@@ -354,6 +373,13 @@ def run_optimization(
     active = copy.deepcopy(base_switches)
     currents_q = {e: 120.0 for e in grid_qubo.lines}
     n_vars = n_couplings = n_cycles = 0
+    solver_backend = "classical_exact_oracle" if cfg.solver == "exact_oracle" else (
+        "sqa_classical_simulation" if cfg.solver == "sqa" else (
+            "numpy_classical_vectorized" if cfg.solver == "numpy_annealer" else (
+                "neal_classical_sa" if cfg.solver == "neal" else "classical_baseline"
+            )
+        )
+    )
 
     for t in range(T):
         prev = dict(active)
@@ -363,6 +389,7 @@ def run_optimization(
             active, best_loss, _ = exact_solver.solve_exact_loss_minimizer(scenario[t])
             ms = (time.perf_counter() - t0) * 1000.0
             energy = best_loss
+            solver_backend = "classical_exact_oracle"
         elif cfg.solver != "classical":
             weights = entropy_calc.compute_all_entropy_weights(grid_qubo.lines, currents_q)
             lam = tuner.calibrate(weights, num_buses)
@@ -375,10 +402,13 @@ def run_optimization(
             if t == 0:
                 n_vars, n_couplings, n_cycles = len(bqm.variables), len(bqm.quadratic), len(builder.cycle_edge_ids)
             step_seed = (cfg.seed + t) if cfg.seed is not None else None
-            energy, ms, resp = _anneal(cfg.solver, annealer, bqm, cfg.num_reads, seed=step_seed)
+            anneal_res = _anneal(cfg.solver, annealer, bqm, cfg.num_reads, seed=step_seed)
+            energy, ms, resp = anneal_res[0], anneal_res[1], anneal_res[2]
+            solver_backend = anneal_res[3] if len(anneal_res) > 3 else "unknown"
             active = annealer.extract_optimal_tree(resp, grid_qubo, weights, injections=scenario[t], current_switches=active)
         else:
             energy, ms = 0.0, base_latency_ms
+            solver_backend = "classical_baseline"
 
         step_feasible, step_feas_msg = verifier_qubo.is_valid_radial_tree(active)
         if not step_feasible:
@@ -426,6 +456,7 @@ def run_optimization(
             **meta,
         },
         "solver_label": SOLVER_CHOICES[cfg.solver],
+        "solver_backend": solver_backend,
         "time_s": [t * dt for t in range(T)],
         "peak_step": peak_step,
         "baseline": {**B, "switches": [int(base_switches.get(e, 0)) for e in edge_ids],
